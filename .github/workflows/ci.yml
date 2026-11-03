@@ -51,8 +51,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npx tsc --noEmit
-      - run: npm run build
+      - run: npm run build # also type-checks, after generating the route types
 
   # The agent against real Gemini: 50 scripted conversations and 100 labelled
   # utterances. Fails if booking success drops below 90%. Needs the
