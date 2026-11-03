@@ -1,0 +1,119 @@
+# 100 labelled customer messages: the first tool the agent should call, and the
+# arguments that must match. Each is sent on its own, over WhatsApp (number
+# verified), with the clock frozen at Monday 2 Nov 2026, 9:00 AM IST.
+#
+# preferred_time: a window (morning / afternoon / evening) also matches a specific
+# time inside it; a specific time must match exactly. Omitted args aren't checked.
+# lang: en, te / hi (romanised), te-script (Telugu script), hi-script (Devanagari).
+
+# --- check_availability (45) -----------------------------------------------------
+- {id: ca01, lang: en, text: "Do you have any slots for an RCT consultation tomorrow evening?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-03", preferred_time: evening}}
+- {id: ca02, lang: te, text: "Repu sayantram RCT consultation ki slots unnaya?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-03", preferred_time: evening}}
+- {id: ca03, lang: hi, text: "Kal shaam RCT consultation ke liye time hai kya?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-03", preferred_time: evening}}
+- {id: ca04, lang: te-script, text: "రేపు సాయంత్రం RCT consultation కి slots ఉన్నాయా?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-03", preferred_time: evening}}
+- {id: ca05, lang: hi-script, text: "कल शाम को RCT consultation का समय मिलेगा?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-03", preferred_time: evening}}
+- {id: ca06, lang: en, text: "Can I get a teeth cleaning on Wednesday morning?", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-04", preferred_time: morning}}
+- {id: ca07, lang: te, text: "Budhavaram podduna teeth cleaning cheyinchukovali", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-04", preferred_time: morning}}
+- {id: ca08, lang: hi, text: "Budhvaar subah teeth cleaning karwani hai", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-04", preferred_time: morning}}
+- {id: ca09, lang: en, text: "Is there a general consultation available this evening?", tool: check_availability, args: {service: General consultation, date: "2026-11-02", preferred_time: evening}}
+- {id: ca10, lang: te, text: "Ivala sayantram general consultation dorukutunda?", tool: check_availability, args: {service: General consultation, date: "2026-11-02", preferred_time: evening}}
+- {id: ca11, lang: hi, text: "Aaj shaam general checkup ho sakta hai?", tool: check_availability, args: {service: General consultation, date: "2026-11-02", preferred_time: evening}}
+- {id: ca12, lang: en, text: "I'd like a tooth extraction this Saturday at 11 am", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-07", preferred_time: "11:00"}}
+- {id: ca13, lang: te, text: "Shanivaram 11 gantalaki tooth extraction cheyagalara?", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-07", preferred_time: "11:00"}}
+- {id: ca14, lang: hi, text: "Shanivaar ko subah 11 baje tooth extraction karwana hai", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-07", preferred_time: "11:00"}}
+- {id: ca15, lang: en, text: "Braces consultation on Friday evening please", tool: check_availability, args: {service: Braces consultation, date: "2026-11-06", preferred_time: evening}}
+- {id: ca16, lang: te-script, text: "శుక్రవారం సాయంత్రం braces consultation కావాలి", tool: check_availability, args: {service: Braces consultation, date: "2026-11-06", preferred_time: evening}}
+- {id: ca17, lang: hi-script, text: "शुक्रवार शाम को braces consultation चाहिए", tool: check_availability, args: {service: Braces consultation, date: "2026-11-06", preferred_time: evening}}
+- {id: ca18, lang: en, text: "Any general consultation slot the day after tomorrow, in the afternoon?", tool: check_availability, args: {service: General consultation, date: "2026-11-04", preferred_time: afternoon}}
+- {id: ca19, lang: te, text: "Ellundi madhyahnam general consultation ki time undaa?", tool: check_availability, args: {service: General consultation, date: "2026-11-04", preferred_time: afternoon}}
+- {id: ca20, lang: hi, text: "Parson dopahar mein general consultation ka time hai?", tool: check_availability, args: {service: General consultation, date: "2026-11-04", preferred_time: afternoon}}
+- {id: ca21, lang: en, text: "Can I see Dr. Arjun for a cleaning on Thursday evening?", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-05", preferred_time: evening, staff: Arjun}}
+- {id: ca22, lang: te, text: "Guruvaram sayantram Dr. Arjun daggara teeth cleaning kavali", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-05", preferred_time: evening, staff: Arjun}}
+- {id: ca23, lang: en, text: "I want an RCT consultation with Dr. Lakshmi on Friday at 6 pm", tool: check_availability, args: {service: RCT consultation, date: "2026-11-06", preferred_time: "18:00", staff: Lakshmi}}
+- {id: ca24, lang: en, text: "What times are free for a general consultation on 5th November?", tool: check_availability, args: {service: General consultation, date: "2026-11-05"}}
+- {id: ca25, lang: te, text: "November 5 na general consultation ki ye time lo free undi?", tool: check_availability, args: {service: General consultation, date: "2026-11-05"}}
+- {id: ca26, lang: en, text: "Is 6:30 pm tomorrow free for a tooth extraction?", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-03", preferred_time: "18:30"}}
+- {id: ca27, lang: hi, text: "Kal shaam saade chhe baje tooth extraction ho sakta hai?", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-03", preferred_time: "18:30"}}
+- {id: ca28, lang: en, text: "Next Monday morning, general consultation?", tool: check_availability, args: {service: General consultation, date: "2026-11-09", preferred_time: morning}}
+- {id: ca29, lang: te, text: "Vacche somavaram podduna general consultation kavali", tool: check_availability, args: {service: General consultation, date: "2026-11-09", preferred_time: morning}}
+- {id: ca30, lang: hi, text: "Agle somvaar subah general consultation milega?", tool: check_availability, args: {service: General consultation, date: "2026-11-09", preferred_time: morning}}
+- {id: ca31, lang: en, text: "Do you have anything for a teeth cleaning tomorrow at 10 am?", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-03", preferred_time: "10:00"}}
+- {id: ca32, lang: te, text: "Repu podduna padi gantalaki teeth cleaning slot undaa?", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-03", preferred_time: "10:00"}}
+- {id: ca33, lang: en, text: "Root canal consultation this Thursday, morning preferably", tool: check_availability, args: {service: RCT consultation, date: "2026-11-05", preferred_time: morning}}
+- {id: ca34, lang: hi, text: "Root canal ke liye consultation chahiye, guruvaar subah", tool: check_availability, args: {service: RCT consultation, date: "2026-11-05", preferred_time: morning}}
+- {id: ca35, lang: en, text: "When is the earliest I can get a general consultation today?", tool: check_availability, args: {service: General consultation, date: "2026-11-02"}}
+- {id: ca36, lang: te, text: "Ivala ye time lo ayina general consultation dorukutunda?", tool: check_availability, args: {service: General consultation, date: "2026-11-02"}}
+- {id: ca37, lang: en, text: "Tooth extraction on Tuesday at 5 pm?", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-03", preferred_time: "17:00"}}
+- {id: ca38, lang: hi-script, text: "मंगलवार शाम 5 बजे tooth extraction हो सकता है?", tool: check_availability, args: {service: Tooth extraction, date: "2026-11-03", preferred_time: "17:00"}}
+- {id: ca39, lang: en, text: "Can my daughter get a general check-up on Saturday morning?", tool: check_availability, args: {service: General consultation, date: "2026-11-07", preferred_time: morning}}
+- {id: ca40, lang: te, text: "Naa kooturiki shanivaram podduna general checkup kavali", tool: check_availability, args: {service: General consultation, date: "2026-11-07", preferred_time: morning}}
+- {id: ca41, lang: en, text: "I need a braces consultation tomorrow at 7:30 in the evening", tool: check_availability, args: {service: Braces consultation, date: "2026-11-03", preferred_time: "19:30"}}
+- {id: ca42, lang: te-script, text: "రేపు రాత్రి ఏడున్నరకి braces consultation ఉందా?", tool: check_availability, args: {service: Braces consultation, date: "2026-11-03", preferred_time: "19:30"}}
+- {id: ca43, lang: en, text: "Any RCT consultation slots on Sunday?", tool: check_availability, args: {service: RCT consultation, date: "2026-11-08"}, also_ok: [none]}
+- {id: ca44, lang: hi, text: "Kal dopahar 12 baje general consultation milega?", tool: check_availability, args: {service: General consultation, date: "2026-11-03", preferred_time: "12:00"}}
+- {id: ca45, lang: en, text: "Teeth cleaning with Dr. Lakshmi next Monday evening", tool: check_availability, args: {service: Teeth cleaning, date: "2026-11-09", preferred_time: evening, staff: Lakshmi}}
+
+# --- search_knowledge (20) -------------------------------------------------------
+- {id: sk01, lang: en, text: "Is there parking near the clinic?", tool: search_knowledge, keywords: [park]}
+- {id: sk02, lang: te, text: "Clinic daggara parking undaa?", tool: search_knowledge, keywords: [park]}
+- {id: sk03, lang: hi, text: "Gaadi parking ki suvidha hai kya?", tool: search_knowledge, keywords: [park]}
+- {id: sk04, lang: en, text: "Can I pay with UPI?", tool: search_knowledge, keywords: [upi, pay]}
+- {id: sk05, lang: te, text: "Card tho pay cheyocha?", tool: search_knowledge, keywords: [card, pay]}
+- {id: sk06, lang: hi, text: "Kya cash payment chalega?", tool: search_knowledge, keywords: [cash, pay]}
+- {id: sk07, lang: en, text: "Do you accept insurance?", tool: search_knowledge, keywords: [insurance]}
+- {id: sk08, lang: te, text: "Insurance cashless untundaa?", tool: search_knowledge, keywords: [insurance, cashless]}
+- {id: sk09, lang: hi-script, text: "क्या आप insurance लेते हैं?", tool: search_knowledge, keywords: [insurance]}
+- {id: sk10, lang: en, text: "Do you treat kids?", tool: search_knowledge, keywords: [child, kid]}
+- {id: sk11, lang: te, text: "Pillalaki treatment chestara?", tool: search_knowledge, keywords: [child, kid]}
+- {id: sk12, lang: en, text: "What should I bring for my first visit?", tool: search_knowledge, keywords: [bring, first]}
+- {id: sk13, lang: hi, text: "Pehli baar aa raha hoon, kya lekar aaun?", tool: search_knowledge, keywords: [bring, first]}
+- {id: sk14, lang: en, text: "What do I do if I have a dental emergency at night?", tool: search_knowledge, keywords: [emergency, night, after]}
+- {id: sk15, lang: te, text: "Raatri pantinoppi vaste em cheyali?", tool: search_knowledge, keywords: [emergency, pain, night, after], also_ok: [handoff_to_human]}
+- {id: sk16, lang: en, text: "How many visits does a root canal take?", tool: search_knowledge, keywords: [root canal, visit, rct]}
+- {id: sk17, lang: hi, text: "Root canal mein kitni baar aana padta hai?", tool: search_knowledge, keywords: [root canal, visit, rct]}
+- {id: sk18, lang: en, text: "What's your cancellation policy?", tool: search_knowledge, keywords: [cancel]}
+- {id: sk19, lang: te, text: "Appointment cancel cheyali ante entha mundu cheppali?", tool: search_knowledge, keywords: [cancel]}
+- {id: sk20, lang: hi, text: "Appointment cancel karne ka kya niyam hai?", tool: search_knowledge, keywords: [cancel]}
+
+# --- find_booking (10) -----------------------------------------------------------
+- {id: fb01, lang: en, text: "When is my appointment?", tool: find_booking}
+- {id: fb02, lang: te, text: "Naa appointment eppudu?", tool: find_booking}
+- {id: fb03, lang: hi, text: "Mera appointment kab hai?", tool: find_booking}
+- {id: fb04, lang: en, text: "I want to cancel my booking", tool: find_booking}
+- {id: fb05, lang: te, text: "Naa appointment cancel cheyandi", tool: find_booking}
+- {id: fb06, lang: hi-script, text: "मेरा appointment cancel करना है", tool: find_booking}
+- {id: fb07, lang: en, text: "Can I reschedule my appointment?", tool: find_booking}
+- {id: fb08, lang: te-script, text: "నా appointment time మార్చాలి", tool: find_booking}
+- {id: fb09, lang: hi, text: "Mera appointment aage badha sakte hain?", tool: find_booking}
+- {id: fb10, lang: en, text: "Did my booking for tomorrow go through?", tool: find_booking}
+
+# --- handoff_to_human (10) -------------------------------------------------------
+- {id: ho01, lang: en, text: "I want to talk to a real person, please", tool: handoff_to_human}
+- {id: ho02, lang: te, text: "Evaraina manishi tho matladali", tool: handoff_to_human}
+- {id: ho03, lang: hi, text: "Mujhe kisi insaan se baat karni hai", tool: handoff_to_human}
+- {id: ho04, lang: en, text: "Let me speak to the doctor directly", tool: handoff_to_human}
+- {id: ho05, lang: hi-script, text: "मुझे डॉक्टर से सीधे बात करनी है", tool: handoff_to_human}
+- {id: ho06, lang: en, text: "This is the third time I'm calling and nobody helps. I want to complain to the owner.", tool: handoff_to_human}
+- {id: ho07, lang: te, text: "Mee service chala worst, manager tho matladali", tool: handoff_to_human}
+- {id: ho08, lang: hi, text: "Bahut bekaar service hai, mujhe manager se baat karni hai", tool: handoff_to_human}
+- {id: ho09, lang: en, text: "Can someone from the clinic call me back?", tool: handoff_to_human}
+- {id: ho10, lang: te-script, text: "దయచేసి clinic నుండి ఎవరైనా నాకు call చేయండి", tool: handoff_to_human}
+
+# --- answered directly, no tool (15) ---------------------------------------------
+# Prices, hours, staff and the address are in the system prompt, so answering
+# without a tool is right; searching the knowledge base first is also fine.
+- {id: no01, lang: en, text: "Hi", tool: none}
+- {id: no02, lang: te, text: "Namaskaram", tool: none}
+- {id: no03, lang: hi, text: "Namaste", tool: none}
+- {id: no04, lang: en, text: "Thank you, that's all", tool: none}
+- {id: no05, lang: hi, text: "Dhanyavaad", tool: none}
+- {id: no06, lang: en, text: "How much does teeth cleaning cost?", tool: none, also_ok: [search_knowledge]}
+- {id: no07, lang: te, text: "RCT consultation fees entha?", tool: none, also_ok: [search_knowledge]}
+- {id: no08, lang: hi, text: "General consultation kitne ka hai?", tool: none, also_ok: [search_knowledge]}
+- {id: no09, lang: en, text: "What time do you open on Saturday?", tool: none, also_ok: [search_knowledge]}
+- {id: no10, lang: te, text: "Aadivaram open untara?", tool: none, also_ok: [search_knowledge]}
+- {id: no11, lang: hi, text: "Aap kitne baje tak khule rehte ho?", tool: none, also_ok: [search_knowledge]}
+- {id: no12, lang: en, text: "Which doctors work at the clinic?", tool: none, also_ok: [search_knowledge]}
+- {id: no13, lang: en, text: "How long is a general consultation?", tool: none, also_ok: [search_knowledge]}
+- {id: no14, lang: en, text: "Where is the clinic located?", tool: none, also_ok: [search_knowledge]}
+- {id: no15, lang: te-script, text: "మీరు ఏ భాషల్లో మాట్లాడతారు?", tool: none, also_ok: [search_knowledge]}

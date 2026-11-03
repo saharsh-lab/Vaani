@@ -1,0 +1,52 @@
+[project]
+name = "vaani"
+version = "0.1.0"
+description = "Multilingual AI receptionist for small businesses"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "sqlalchemy[asyncio]>=2.0.36",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.14",
+  "pydantic-settings>=2.6",
+  "httpx>=0.28",
+  "google-genai>=1.30",
+  "livekit-api>=1.2",
+  "pyjwt>=2.8",
+  "email-validator>=2.2",
+]
+
+[project.optional-dependencies]
+# The real-time voice worker (python -m vaani_agent.voice). The API doesn't need it.
+voice = ["livekit-agents[google,sarvam,silero]~=1.8"]
+dev = ["vaani[voice]", "pytest>=8.3", "pytest-asyncio>=1.0", "ruff>=0.8", "pyyaml>=6"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*", "vaani_agent*"]
+
+[tool.setuptools.package-data]
+app = ["static/*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+filterwarnings = [
+  # LiveKit's local dev secret ("secret") is short; production uses a long one.
+  "ignore::jwt.warnings.InsecureKeyLengthWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+# `ruff format` handles line length; prose like the system prompt may run long.
+ignore = ["E501"]

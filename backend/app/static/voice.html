@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talk to {{BUSINESS_NAME}}</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
+    --accent: #0f7b6c; --accent-text: #ffffff; --danger: #c2412d; --you: #e8f3f1; --them: #f1f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413; --card: #1d1d1b; --text: #ecebe6; --muted: #9c9a93; --line: #2e2d2a;
+      --accent: #3fb5a3; --accent-text: #0d1f1c; --danger: #e0705c; --you: #1f3532; --them: #262522;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+    background: var(--bg); color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans Telugu", sans-serif;
+  }
+  main {
+    width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+  }
+  h1 { margin: 0; font-size: 1.15rem; font-weight: 600; }
+  .sub { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+  .call { display: flex; align-items: center; gap: 14px; }
+  button {
+    width: 64px; height: 64px; flex: none; border: 0; border-radius: 50%; cursor: pointer;
+    background: var(--accent); color: var(--accent-text); display: grid; place-items: center;
+    transition: transform 0.1s ease, background 0.2s ease;
+  }
+  button:active { transform: scale(0.96); }
+  button:disabled { opacity: 0.6; cursor: progress; }
+  button.live { background: var(--danger); }
+  button svg { width: 28px; height: 28px; }
+  .status { font-weight: 500; }
+  .hint { color: var(--muted); font-size: 0.85rem; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+         background: var(--muted); vertical-align: middle; }
+  .speaking .dot { background: var(--accent); animation: pulse 0.9s ease-in-out infinite; }
+  .listening .dot { background: var(--accent); }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+  @media (prefers-reduced-motion: reduce) { .speaking .dot { animation: none; } }
+  ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;
+       max-height: 45vh; overflow-y: auto; }
+  ol:empty { display: none; }
+  li { padding: 8px 12px; border-radius: 12px; max-width: 85%; overflow-wrap: anywhere; }
+  li.you { align-self: flex-end; background: var(--you); }
+  li.them { align-self: flex-start; background: var(--them); }
+  .note { margin: 0; color: var(--muted); font-size: 0.78rem; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>{{BUSINESS_NAME}}</h1>
+    <p class="sub">Talk to our receptionist in Telugu, Hindi or English</p>
+  </div>
+  <div class="call">
+    <button id="call" aria-label="Start call">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>
+      </svg>
+    </button>
+    <div>
+      <div class="status" id="status" role="status" aria-live="polite"><span class="dot"></span>Tap to talk</div>
+      <div class="hint" id="hint">Your browser will ask to use the microphone.</div>
+    </div>
+  </div>
+  <ol id="transcript" aria-label="Conversation"></ol>
+  <p class="note">This call is transcribed so the team can follow up. Calls end after 5 minutes.</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2.22.4/dist/livekit-client.umd.js"></script>
+<script>
+  const SLUG = {{BUSINESS_SLUG_JSON}};
+  const { Room, RoomEvent, Track } = LivekitClient;
+  const button = document.getElementById("call");
+  const statusEl = document.getElementById("status");
+  const hintEl = document.getElementById("hint");
+  const transcript = document.getElementById("transcript");
+  const STATES = {
+    idle: "Tap to talk", connecting: "Connecting…", initializing: "Connecting…",
+    listening: "Listening", thinking: "Thinking…", speaking: "Speaking", ended: "Call ended",
+  };
+  let room = null;
+
+  function setState(state, hint = "") {
+    statusEl.className = "status " + state;
+    statusEl.innerHTML = '<span class="dot"></span>' + (STATES[state] || state);
+    hintEl.textContent = hint;
+  }
+
+  function isMyTrack(trackSid) {
+    for (const pub of room.localParticipant.trackPublications.values()) {
+      if (pub.trackSid === trackSid) return true;
+    }
+    return false;
+  }
+
+  const bubbles = new Map();
+  function showLine(segmentId, mine, text) {
+    let li = bubbles.get(segmentId);
+    if (!li) {
+      li = document.createElement("li");
+      li.className = mine ? "you" : "them";
+      bubbles.set(segmentId, li);
+      transcript.appendChild(li);
+    }
+    li.textContent = text;
+    transcript.scrollTop = transcript.scrollHeight;
+  }
+
+  async function start() {
+    button.disabled = true;
+    setState("connecting");
+    try {
+      const res = await fetch("/v1/voice/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ business: SLUG }),
+      });
+      if (!res.ok) {
+        throw new Error(res.status === 429 ? "Too many calls from here. Try again later." : "Couldn't start the call.");
+      }
+      const { server_url, participant_token } = await res.json();
+
+      room = new Room();
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Audio) document.body.appendChild(track.attach());
+      });
+      room.on(RoomEvent.ParticipantAttributesChanged, (_changed, participant) => {
+        const state = participant.attributes["lk.agent.state"];
+        if (state) setState(state);
+      });
+      room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+        if (!room.canPlaybackAudio) setState("listening", "Tap the button to hear the receptionist.");
+      });
+      room.on(RoomEvent.Disconnected, () => stop("ended"));
+      room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+        // The receptionist left (call time limit, or a service outage): end the call.
+        if (participant.isAgent || participant.identity.startsWith("agent-")) stop("ended");
+      });
+      room.registerTextStreamHandler("lk.transcription", async (reader, participant) => {
+        const attrs = reader.info.attributes || {};
+        const segment = attrs["lk.segment_id"] || reader.info.id;
+        const mine = participant.identity === room.localParticipant.identity
+          || isMyTrack(attrs["lk.transcribed_track_id"]);
+        let text = "";
+        for await (const chunk of reader) {
+          text += chunk;
+          showLine(segment, mine, text);
+        }
+      });
+
+      await room.connect(server_url, participant_token);
+      await room.startAudio();
+      await room.localParticipant.setMicrophoneEnabled(true);
+      button.classList.add("live");
+      button.setAttribute("aria-label", "End call");
+      setState("initializing", "Tap again to end the call.");
+    } catch (err) {
+      await stop("idle");
+      setState("idle", err.name === "NotAllowedError" ? "Microphone access is needed for the call." : err.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  async function stop(state) {
+    const r = room;
+    room = null;
+    button.classList.remove("live");
+    button.setAttribute("aria-label", "Start call");
+    if (state) setState(state, state === "ended" ? "Tap to call again." : "");
+    if (r) await r.disconnect();
+    document.querySelectorAll("body > audio").forEach((el) => el.remove());
+  }
+
+  button.addEventListener("click", () => {
+    if (room && !room.canPlaybackAudio) return room.startAudio();
+    room ? stop("ended") : start();
+  });
+</script>
+</body>
+</html>
