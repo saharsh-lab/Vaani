@@ -377,6 +377,14 @@ async def main() -> None:
         logins = await add_demo_logins(session, bid, args.slug, chosen)
         if args.demo_activity:
             await add_demo_activity(session, bid)
+    from app.kb_index import index_missing
+    from app.services import embeddings
+
+    if embeddings.get_embedder() is not None:
+        try:
+            print(f"Embedded {await index_missing()} FAQ chunks for search in any language.")
+        except SystemExit as exc:
+            print(f"Skipped embeddings ({exc}); search works by keyword until app.kb_index runs.")
     print(f"Seeded {args.slug} (business id {bid})")
     print("Dashboard logins:")
     for email, password in logins.items():

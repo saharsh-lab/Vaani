@@ -8,7 +8,7 @@ An AI receptionist for small Indian businesses. It answers calls and WhatsApp me
 - [x] **WhatsApp channel:** signed webhooks, chats that continue across messages, dedupe of redelivered messages, read receipts with typing indicator
 - [x] **Voice notes on WhatsApp:** transcribed with Sarvam (Telugu, Hindi, English and mixed speech), then answered like a typed message
 - [ ] Booking confirmations and owner handoff alerts on WhatsApp (needs approved message templates)
-- [ ] Knowledge base with embeddings (pgvector), PDF upload
+- [x] **Knowledge base search in any language:** hybrid keyword + Gemini-embedding search (pgvector), PDF and text uploads; a Telugu or Hindi question finds the English FAQ that answers it
 - [x] **Real-time voice:** browser "Talk to us" widget over LiveKit, Sarvam streaming speech-to-text, Gemini with the same six tools, Sarvam Bulbul voice; per-reply latency and per-call cost saved
 - [x] **Owner and staff dashboard** (Next.js + shadcn/ui): sign-up, role-based access, bookings calendar, callback queue, conversations with transcripts and cost, settings, FAQs, team, channels
 - [x] **Eval suite:** 50 scripted conversations and 100 labelled utterances run against real Gemini, scored from the database plus an LLM judge; nightly in CI, failing below 90% booking success
@@ -194,7 +194,7 @@ infra/postgres/     database role setup
 
 - `staff_services` is a join table rather than `staff.service_ids[]`, so every link is checked by a foreign key.
 - Added `businesses.slug` (for lookups and widget URLs), `messages.business_id` (for row-level security), LLM token counts on `conversations`, and a `web_chat` channel.
-- Knowledge search is keyword-only for now, and the agent is told to search in English. Embeddings come with the RAG milestone.
+- Knowledge search combines keywords with Gemini embeddings (`gemini-embedding-001`, 768 dimensions) and drops weak semantic matches; thresholds and how they were measured are in `app/services/knowledge.py`. Without a Gemini key it falls back to keywords. After loading data into a new database, run `python -m app.kb_index` to embed it.
 - The cost per conversation uses the prices in `vaani_agent/config.py`. Gemini 3.5 Flash-Lite is set to $0.30 / $2.50 per million input / output tokens, taken from third-party price trackers. Confirm on Google's pricing page before you quote numbers.
 
 ## Known limits

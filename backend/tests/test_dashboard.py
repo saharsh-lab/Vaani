@@ -1,56 +1,10 @@
 """Owner and staff dashboard API: accounts, roles, tenant isolation, and that what
 owners change in settings is what the agent then uses."""
 
-from contextlib import asynccontextmanager
-
-import httpx
 import pytest
 
-import app.api.accounts as accounts_api
-from app.db import system_session
-from app.main import app
-from app.seed import DEMO_PASSWORDS, add_demo_logins
-from tests.conftest import TUESDAY
-
-OWNER = "owner@sri-dental.example.com"
-STAFF = "staff@sri-dental.example.com"
-
-
-@pytest.fixture(autouse=True)
-def fresh_login_limits(monkeypatch):
-    monkeypatch.setattr(accounts_api, "login_limiter", accounts_api.RateLimiter())
-
-
-@pytest.fixture
-async def logins(clinic):
-    async with system_session() as s:
-        await add_demo_logins(s, clinic, "sri-dental")
-
-
-def browser() -> httpx.AsyncClient:
-    """A client with its own cookie jar, like a separate browser."""
-    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
-
-
-@asynccontextmanager
-async def signed_in(email: str, password: str):
-    async with browser() as c:
-        r = await c.post("/v1/auth/login", json={"email": email, "password": password})
-        assert r.status_code == 200, r.text
-        yield c
-
-
-@pytest.fixture
-async def owner(logins):
-    async with signed_in(OWNER, DEMO_PASSWORDS["owner"]) as c:
-        yield c
-
-
-@pytest.fixture
-async def staff(logins):
-    async with signed_in(STAFF, DEMO_PASSWORDS["staff"]) as c:
-        yield c
-
+from app.seed import DEMO_PASSWORDS
+from tests.conftest import OWNER, TUESDAY, browser, signed_in
 
 # Accounts --------------------------------------------------------------------------------
 

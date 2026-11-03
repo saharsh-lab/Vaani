@@ -241,13 +241,20 @@ class BlockedIn(BaseModel):
 class FaqRow(BaseModel):
     id: uuid.UUID
     title: str
-    content: str
+    content: str  # an uploaded document is shortened to a preview
+    source_type: str  # faq | pdf | text
+    chunks: int
     uploaded_at: dt.datetime
 
 
 class FaqIn(BaseModel):
     title: str = Field(min_length=2, max_length=120)
     content: str = Field(min_length=2, max_length=4000)
+
+
+class PasswordChangeIn(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=200)
 
 
 class MemberIn(BaseModel):

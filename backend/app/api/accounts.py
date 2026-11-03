@@ -9,11 +9,18 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from app import clock
-from app.auth import clear_session, hash_password, issue_session, verify_password
+from app.auth import (
+    CurrentUser,
+    DashboardDB,
+    clear_session,
+    hash_password,
+    issue_session,
+    verify_password,
+)
 from app.db import system_session
 from app.models import Business, User, WorkingHours
 from app.ratelimit import RateLimiter
-from app.schemas_dashboard import LoginIn, MeOut, SignupIn
+from app.schemas_dashboard import LoginIn, MeOut, PasswordChangeIn, SignupIn
 from app.services.dashboard import business_out, user_out
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
@@ -95,6 +102,14 @@ async def login(body: LoginIn, request: Request, response: Response) -> MeOut:
         business = await s.get(Business, user.business_id)
     issue_session(response, user)
     return MeOut(user=user_out(user), business=business_out(business))
+
+
+@router.post("/password", status_code=204)
+async def change_password(body: PasswordChangeIn, user: CurrentUser, db: DashboardDB) -> None:
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Your current password is wrong")
+    user.password_hash = hash_password(body.new_password)
+    await db.flush()
 
 
 @router.post("/logout", status_code=204)

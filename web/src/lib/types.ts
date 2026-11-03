@@ -122,4 +122,11 @@ export type Blocked = {
   reason: string | null;
 };
 
-export type Faq = { id: string; title: string; content: string; uploaded_at: string };
+export type Faq = {
+  id: string;
+  title: string;
+  content: string;
+  source_type: "faq" | "pdf" | "text";
+  chunks: number;
+  uploaded_at: string;
+};

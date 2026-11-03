@@ -56,6 +56,7 @@ from app.schemas_dashboard import (
     StaffRow,
     UserOut,
 )
+from app.services import documents, knowledge
 
 
 def _not_found(what: str) -> HTTPException:
@@ -593,17 +594,30 @@ async def delete_blocked(db: AsyncSession, blocked_id: uuid.UUID) -> None:
 # Knowledge base (FAQs) --------------------------------------------------------------------
 
 
+PREVIEW_CHARS = 600
+
+
+def _faq_row(doc: KbDocument, content: str, chunks: int) -> FaqRow:
+    if doc.source_type != "faq" and len(content) > PREVIEW_CHARS:
+        content = content[:PREVIEW_CHARS].rstrip() + " …"
+    return FaqRow(
+        id=doc.id,
+        title=doc.title,
+        content=content,
+        source_type=doc.source_type,
+        chunks=chunks,
+        uploaded_at=doc.uploaded_at,
+    )
+
+
 async def list_faqs(db: AsyncSession) -> list[FaqRow]:
     rows = await db.execute(
-        select(KbDocument, func.string_agg(KbChunk.content, "\n\n"))
+        select(KbDocument, func.string_agg(KbChunk.content, "\n\n"), func.count(KbChunk.id))
         .outerjoin(KbChunk, KbChunk.document_id == KbDocument.id)
         .group_by(KbDocument.id)
-        .order_by(KbDocument.title)
+        .order_by(KbDocument.source_type, KbDocument.title)
     )
-    return [
-        FaqRow(id=d.id, title=d.title, content=content or "", uploaded_at=d.uploaded_at)
-        for d, content in rows
-    ]
+    return [_faq_row(d, content or "", n) for d, content, n in rows]
 
 
 async def save_faq(
@@ -613,17 +627,36 @@ async def save_faq(
         doc = await db.get(KbDocument, faq_id)
         if doc is None:
             raise _not_found("FAQ")
+        if doc.source_type != "faq":
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "Uploaded documents can't be edited; upload a new version"
+            )
         doc.title = body.title
-        await db.execute(delete(KbChunk).where(KbChunk.document_id == doc.id))
     else:
         doc = KbDocument(business_id=business.id, title=body.title, source_type="faq")
         db.add(doc)
         await db.flush()
-    # One chunk per FAQ; the embeddings milestone will split long documents.
-    db.add(KbChunk(business_id=business.id, document_id=doc.id, content=body.content))
-    await db.flush()
+    # One chunk per FAQ, embedded straight away so the agent finds it in any language.
+    await knowledge.replace_chunks(db, business.id, doc.id, [body.content])
     await db.refresh(doc)
-    return FaqRow(id=doc.id, title=doc.title, content=body.content, uploaded_at=doc.uploaded_at)
+    return _faq_row(doc, body.content, 1)
+
+
+async def upload_document(
+    db: AsyncSession, business: Business, title: str, source_type: str, body_text: str
+) -> FaqRow:
+    chunks = documents.chunk_text(body_text)
+    if not chunks:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "No text found in that file. Scanned PDFs need to be typed up first.",
+        )
+    doc = KbDocument(business_id=business.id, title=title, source_type=source_type)
+    db.add(doc)
+    await db.flush()
+    await knowledge.replace_chunks(db, business.id, doc.id, chunks)
+    await db.refresh(doc)
+    return _faq_row(doc, "\n\n".join(chunks), len(chunks))
 
 
 async def delete_faq(db: AsyncSession, faq_id: uuid.UUID) -> None:

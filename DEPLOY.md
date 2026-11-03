@@ -74,6 +74,8 @@ ADMIN_DATABASE_URL='<from step 1>' DATABASE_URL='<from step 1>' \
   .venv/bin/python -m app.seed --demo-activity --owner-password '<choose one>' --staff-password '<choose one>'
 ```
 
+With `GEMINI_API_KEY` set in your shell or `.env`, the seed also embeds the FAQs, so they're searchable in any language. Otherwise, run `python -m app.kb_index` later with the same database URLs.
+
 ## 4. Voice: LiveKit Cloud and Railway, service 2
 
 1. In **LiveKit Cloud**, create a project. **Settings → Keys** gives you the URL (`wss://…livekit.cloud`), the API key and the secret. Add all three to the API service (step 2), so it can hand out call tokens.

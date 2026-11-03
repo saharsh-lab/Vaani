@@ -40,6 +40,14 @@ export async function api<T>(path: string, { method, json }: Options = {}): Prom
   return body as T;
 }
 
+/** Upload a file (multipart form) through the same /api rewrite. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(`/api${path}`, { method: "POST", body: form, credentials: "same-origin" });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(messageFrom(body, res.status), res.status, body);
+  return body as T;
+}
+
 /** GET with caching and revalidation; pass null to skip. */
 export function useApi<T>(path: string | null, config?: SWRConfiguration<T, ApiError>) {
   return useSWR<T, ApiError>(path, (p: string) => api<T>(p), config);

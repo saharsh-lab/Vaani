@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Cog,
   Headset,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MessagesSquare,
@@ -13,10 +14,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { SWRConfig } from "swr";
 
+import { ErrorNote, Field } from "@/components/kit";
 import { SessionProvider } from "@/components/session";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, useApi } from "@/lib/api";
@@ -38,6 +43,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: me, error } = useApi<Me>("/v1/dashboard/me");
+  const [changingPassword, setChangingPassword] = useState(false);
   // Polled so the badge updates when the agent hands a call over.
   const { data: waiting } = useApi<Handoff[]>(me ? "/v1/dashboard/handoffs" : null, {
     refreshInterval: 30_000,
@@ -112,7 +118,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
-            <div className="mt-auto hidden px-2 py-4 md:block">
+            <div className="mt-auto hidden px-2 py-4 md:grid md:gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setChangingPassword(true)} className="w-full justify-start">
+                <KeyRound /> Change password
+              </Button>
               <Button variant="ghost" size="sm" onClick={signOut} className="w-full justify-start">
                 <LogOut /> Sign out
               </Button>
@@ -120,7 +129,62 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </aside>
           <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
         </div>
+        <PasswordDialog open={changingPassword} onOpenChange={setChangingPassword} />
       </SessionProvider>
     </SWRConfig>
+  );
+}
+
+function PasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [error, setError] = useState<ApiError>();
+  const [busy, setBusy] = useState(false);
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    if (form.get("new_password") !== form.get("confirm")) {
+      setError(new ApiError("The new passwords don't match", 422, null));
+      return;
+    }
+    setBusy(true);
+    setError(undefined);
+    try {
+      await api("/v1/auth/password", {
+        json: { current_password: form.get("current_password"), new_password: form.get("new_password") },
+      });
+      toast.success("Password changed");
+      onOpenChange(false);
+    } catch (err) {
+      setError(err as ApiError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => (setError(undefined), onOpenChange(o))}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Change password</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid gap-3">
+          <Field label="Current password" htmlFor="current_password">
+            <Input id="current_password" name="current_password" type="password" autoComplete="current-password" required />
+          </Field>
+          <Field label="New password" htmlFor="new_password" hint="At least 8 characters.">
+            <Input id="new_password" name="new_password" type="password" autoComplete="new-password" minLength={8} required />
+          </Field>
+          <Field label="New password again" htmlFor="confirm">
+            <Input id="confirm" name="confirm" type="password" autoComplete="new-password" minLength={8} required />
+          </Field>
+          <ErrorNote error={error} />
+          <DialogFooter>
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Change password"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

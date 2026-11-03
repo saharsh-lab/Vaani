@@ -11,7 +11,7 @@ import uuid
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Form, HTTPException, Query, UploadFile, status
 
 from app import clock
 from app.auth import CurrentUser, DashboardDB, Owner, ViewerBusiness
@@ -46,6 +46,7 @@ from app.schemas_dashboard import (
 )
 from app.services import bookings as booking_service
 from app.services import dashboard as d
+from app.services import documents
 
 router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 
@@ -257,6 +258,35 @@ async def edit_faq(
     faq_id: uuid.UUID, body: FaqIn, db: DashboardDB, business: ViewerBusiness, _: Owner
 ) -> FaqRow:
     return await d.save_faq(db, business, body, faq_id)
+
+
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+
+@router.post("/faqs/upload", status_code=201)
+async def upload_document(
+    db: DashboardDB,
+    business: ViewerBusiness,
+    _: Owner,
+    file: UploadFile,
+    title: Annotated[str | None, Form(max_length=120)] = None,
+) -> FaqRow:
+    """A PDF or text file (price list, menu, policies), split into searchable parts."""
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "Files can be up to 5 MB")
+    name = file.filename or "document"
+    if name.lower().endswith(".pdf") or data.startswith(b"%PDF"):
+        try:
+            body, kind = documents.extract_pdf_text(data), "pdf"
+        except documents.UnreadableDocument as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+    elif name.lower().endswith((".txt", ".md")):
+        body, kind = data.decode("utf-8", errors="replace"), "text"
+    else:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Upload a PDF or a .txt file")
+    title = (title or name.rsplit(".", 1)[0]).strip()[:120] or "Document"
+    return await d.upload_document(db, business, title, kind, body)
 
 
 @router.delete("/faqs/{faq_id}", status_code=204)

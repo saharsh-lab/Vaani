@@ -16,6 +16,8 @@ class AgentSettings(BaseSettings):
         default=None, validation_alias=AliasChoices("GEMINI_API_KEY", "GOOGLE_API_KEY")
     )
     gemini_model: str = "gemini-3.5-flash-lite"
+    # Knowledge-base search across languages; 768 dimensions to match the database.
+    embedding_model: str = "gemini-embedding-001"
 
     # For cost per conversation: Gemini 3.5 Flash-Lite as listed by price trackers in
     # Nov 2026. Confirm on ai.google.dev/gemini-api/docs/pricing before quoting numbers.
