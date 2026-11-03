@@ -40,6 +40,7 @@ from livekit.plugins.sarvam.tts import SarvamTTSLanguages
 
 from vaani_agent.api_client import VaaniApi
 from vaani_agent.config import VOICE_AGENT_NAME, AgentSettings, get_agent_settings
+from vaani_agent.observability import init_sentry
 from vaani_agent.prompt import build_system_prompt
 from vaani_agent.runtime import OUTCOMES
 from vaani_agent.tools import TOOLS, ToolContext, prepare_args
@@ -245,6 +246,7 @@ class VaaniVoiceAgent(Agent):
 
 
 def prewarm(proc: JobProcess) -> None:
+    init_sentry("voice-worker")
     proc.userdata["vad"] = silero.VAD.load()
 
 

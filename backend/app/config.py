@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     # Real environment variables win over .env files.
     model_config = SettingsConfigDict(env_file=("../.env", ".env"), extra="ignore")
 
+    app_env: str = "development"  # "production" turns on the startup safety checks
     database_url: str = "postgresql+psycopg://vaani_app:vaani_app@localhost:5435/vaani"
     admin_database_url: str = "postgresql+psycopg://vaani_admin:vaani_admin@localhost:5435/vaani"
     agent_api_key: str = "dev-agent-key"
@@ -19,6 +20,26 @@ class Settings(BaseSettings):
     dashboard_jwt_secret: str = "dev-only-dashboard-secret-change-me-0123456789"
     dashboard_session_days: int = 7
     cookie_secure: bool = False  # True when the dashboard is served over HTTPS
+
+
+DEV_DEFAULTS = {
+    "agent_api_key": "dev-agent-key",
+    "dashboard_jwt_secret": "dev-only-dashboard-secret-change-me-0123456789",
+}
+
+
+def production_problems(settings: Settings, livekit_api_secret: str) -> list[str]:
+    """Settings that are fine on a laptop but unsafe on the internet."""
+    problems = []
+    for field, default in DEV_DEFAULTS.items():
+        value = getattr(settings, field)
+        if value == default or len(value) < 32:
+            problems.append(f"{field.upper()} must be a random secret of at least 32 characters")
+    if not settings.cookie_secure:
+        problems.append("COOKIE_SECURE must be true (the dashboard is served over HTTPS)")
+    if livekit_api_secret == "secret":
+        problems.append("LIVEKIT_API_SECRET is LiveKit's dev secret; use your LiveKit Cloud secret")
+    return problems
 
 
 @lru_cache

@@ -12,7 +12,8 @@ An AI receptionist for small Indian businesses. It answers calls and WhatsApp me
 - [x] **Real-time voice:** browser "Talk to us" widget over LiveKit, Sarvam streaming speech-to-text, Gemini with the same six tools, Sarvam Bulbul voice; per-reply latency and per-call cost saved
 - [x] **Owner and staff dashboard** (Next.js + shadcn/ui): sign-up, role-based access, bookings calendar, callback queue, conversations with transcripts and cost, settings, FAQs, team, channels
 - [x] **Eval suite:** 50 scripted conversations and 100 labelled utterances run against real Gemini, scored from the database plus an LLM judge; nightly in CI, failing below 90% booking success
-- [ ] Deploy, Sentry + Langfuse
+- [x] **Ready to deploy:** production safety checks, Docker images for the API and the voice worker, Sentry; step-by-step guide in [DEPLOY.md](DEPLOY.md) (Neon, Railway, Vercel, LiveKit Cloud)
+- [ ] Langfuse LLM tracing; Redis job queue for running several API instances
 
 ## Quickstart
 

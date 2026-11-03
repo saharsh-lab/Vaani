@@ -1,0 +1,14 @@
+# The real-time voice worker (LiveKit agent). A separate service from the API.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY app ./app
+COPY vaani_agent ./vaani_agent
+RUN pip install --no-cache-dir ".[voice]"
+# Model files for the plugins (Silero VAD), baked into the image.
+RUN python -m vaani_agent.voice download-files
+
+CMD ["python", "-m", "vaani_agent.voice", "start"]

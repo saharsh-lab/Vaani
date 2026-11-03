@@ -4,9 +4,17 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api import accounts, agent, dashboard, tools, voice, whatsapp
+from app.config import get_settings, production_problems
 from app.errors import VaaniError
+from vaani_agent.config import get_agent_settings
+from vaani_agent.observability import init_sentry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+if get_settings().app_env == "production":
+    if problems := production_problems(get_settings(), get_agent_settings().livekit_api_secret):
+        raise RuntimeError("Refusing to start in production:\n- " + "\n- ".join(problems))
+init_sentry("api")
 
 app = FastAPI(
     title="Vaani API",

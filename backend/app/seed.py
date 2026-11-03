@@ -166,11 +166,16 @@ DEMO_PASSWORDS = {"owner": "vaani-demo-owner", "staff": "vaani-demo-staff"}
 
 
 async def add_demo_logins(
-    session: AsyncSession, business_id: uuid.UUID, slug: str
+    session: AsyncSession,
+    business_id: uuid.UUID,
+    slug: str,
+    passwords: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    """An owner and a staff login for the demo business. Returns {email: password}."""
+    """An owner and a staff login for the demo business. Returns {email: password}.
+    On a public server pass your own passwords: the defaults are in the repo."""
     from app.auth import hash_password
 
+    passwords = {**DEMO_PASSWORDS, **(passwords or {})}
     logins = {}
     for role, name in (("owner", "Dr. Lakshmi Reddy"), ("staff", "Anitha (front desk)")):
         email = f"{role}@{slug}.example.com"
@@ -181,10 +186,10 @@ async def add_demo_logins(
                 email=email,
                 name=name,
                 role=role,
-                password_hash=hash_password(DEMO_PASSWORDS[role]),
+                password_hash=hash_password(passwords[role]),
             )
         )
-        logins[email] = DEMO_PASSWORDS[role]
+        logins[email] = passwords[role]
     await session.flush()
     return logins
 
@@ -355,18 +360,30 @@ async def main() -> None:
     parser.add_argument(
         "--demo-activity", action="store_true", help="add sample bookings and conversations"
     )
+    parser.add_argument("--owner-password", help="instead of the public demo password")
+    parser.add_argument("--staff-password", help="instead of the public demo password")
     args = parser.parse_args()
+    chosen = {
+        role: pw
+        for role, pw in (("owner", args.owner_password), ("staff", args.staff_password))
+        if pw
+    }
+    if any(len(pw) < 8 for pw in chosen.values()):
+        parser.error("passwords must be at least 8 characters")
     async with system_session() as session:
         bid = await seed_demo(
             session, slug=args.slug, whatsapp_phone_number_id=args.whatsapp_number_id
         )
-        logins = await add_demo_logins(session, bid, args.slug)
+        logins = await add_demo_logins(session, bid, args.slug, chosen)
         if args.demo_activity:
             await add_demo_activity(session, bid)
     print(f"Seeded {args.slug} (business id {bid})")
-    print("Dashboard logins (demo only; change them anywhere public):")
+    print("Dashboard logins:")
     for email, password in logins.items():
-        print(f"  {email}  /  {password}")
+        shown = password if password in DEMO_PASSWORDS.values() else "(the password you chose)"
+        print(f"  {email}  /  {shown}")
+    if len(chosen) < 2:
+        print("Demo passwords are public: use --owner-password and --staff-password on a server.")
 
 
 if __name__ == "__main__":
