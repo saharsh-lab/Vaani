@@ -33,8 +33,9 @@ TOOLS: list[dict] = [
                 "preferred_time": {
                     "type": "string",
                     "description": (
-                        "morning (before 12 PM), afternoon (12-5 PM), evening (after 5 PM; "
-                        "also sayantram / సాయంత్రం / shaam / शाम), any, or a time like 18:15"
+                        "morning (before 12 PM), afternoon (12-5 PM), evening (after 5 PM, "
+                        "which is what sayantram / సాయంత్రం / shaam / शाम mean), any, "
+                        "or a time like 18:15"
                     ),
                 },
                 "staff": {"type": "string", "description": "Only if the customer asks for someone"},

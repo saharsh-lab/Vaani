@@ -345,6 +345,10 @@ def test_calls_fall_back_to_a_second_model():
     assert isinstance(model, llm.FallbackAdapter)
     assert [m.model for m in model._llm_instances] == [s.gemini_model, "gemini-3.1-flash-lite"]
     assert model._attempt_timeout == s.voice_llm_timeout_seconds
+    # A tool call made by one model can be continued by the other.
+    main, fallback = model._llm_instances
+    main._thought_signatures["call_1"] = b"signature"
+    assert fallback._thought_signatures == {"call_1": b"signature"}
     assert not isinstance(
         voice_llm(AgentSettings(gemini_api_key="t", voice_fallback_model="")), llm.FallbackAdapter
     )

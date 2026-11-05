@@ -24,10 +24,12 @@ from livekit.agents import (
     Agent,
     AgentServer,
     AgentSession,
+    APIConnectOptions,
     ErrorEvent,
     JobContext,
     JobProcess,
     RunContext,
+    SessionConnectOptions,
     cli,
     function_tool,
     llm,
@@ -294,6 +296,15 @@ def voice_llm(s: AgentSettings) -> llm.LLM:
     instances = [google.LLM(model=m, api_key=s.gemini_api_key, **extra) for m in models]
     if len(instances) == 1:
         return instances[0]
+    # Gemini 3 sends back a signature with each tool call and refuses a history without
+    # it (400 "missing a thought_signature"). The plugin keeps them per model, so after
+    # a tool call the fallback failed exactly when it was needed. Each model accepts the
+    # other's signatures, so they share one store.
+    shared: dict[str, bytes] = {}
+    for instance in instances:
+        if not hasattr(instance, "_thought_signatures"):
+            log.warning("livekit-plugins-google changed; fallback may lose tool-call signatures")
+        instance._thought_signatures = shared
     return llm.FallbackAdapter(instances, attempt_timeout=s.voice_llm_timeout_seconds)
 
 
@@ -389,6 +400,12 @@ async def entrypoint(ctx: JobContext) -> None:
         llm=voice_llm(s),
         tts=tts,
         turn_handling={"turn_detection": "vad"},
+        conn_options=SessionConnectOptions(
+            # LiveKit drops a speech-to-text socket that sends nothing back, not even a
+            # pong, for 6 s. Sarvam was that slow at busy moments, and each drop lost what
+            # the caller said while it reconnected.
+            stt_conn_options=APIConnectOptions(liveness_timeout=s.voice_stt_liveness_seconds),
+        ),
     )
     phrases = StockPhrases(session, language)
     session.on("error", phrases.on_error)

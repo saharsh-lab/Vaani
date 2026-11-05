@@ -94,6 +94,11 @@ def test_specific_time_returns_nearest_slots():
         ("6pm", TimePreference(target=time(18))),
         ("6.30 pm", TimePreference(target=time(18, 30))),
         ("12 am", TimePreference(target=time(0))),
+        ("sayantram", TimePreference(window=WINDOWS["evening"])),
+        ("సాయంత్రం", TimePreference(window=WINDOWS["evening"])),
+        ("Shaam", TimePreference(window=WINDOWS["evening"])),
+        ("सुबह", TimePreference(window=WINDOWS["morning"])),
+        ("podduna", TimePreference(window=WINDOWS["morning"])),
     ],
 )
 def test_parse_preference(raw, expected):

@@ -71,6 +71,9 @@ class AgentSettings(BaseSettings):
     # passes; at 10 s, replies under load were cut mid-sentence. Gemini rejects
     # deadlines under 10 s (400 INVALID_ARGUMENT).
     voice_llm_timeout_seconds: float = Field(default=15.0, ge=10.0)
+    # Seconds Sarvam's streaming socket may stay silent (no transcript or pong) before
+    # LiveKit reconnects it. LiveKit's default is 6.
+    voice_stt_liveness_seconds: float = 15.0
     voice_max_call_seconds: int = 300  # caps cost per call, and abuse of the public demo
     voice_calls_per_ip_per_hour: int = 20
     # Warm worker processes waiting for calls; each holds the VAD model (~150 MB).

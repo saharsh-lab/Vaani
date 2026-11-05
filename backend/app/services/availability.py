@@ -15,6 +15,33 @@ WINDOWS: dict[str, tuple[time, time]] = {
     "evening": (time(17), time(23, 59)),
     "night": (time(17), time(23, 59)),
 }
+# The words callers use, as the model sometimes passes them on untranslated.
+WINDOW_WORDS: dict[str, str] = {
+    # Telugu
+    "podduna": "morning",
+    "poddunna": "morning",
+    "udayam": "morning",
+    "పొద్దున": "morning",
+    "పొద్దున్న": "morning",
+    "ఉదయం": "morning",
+    "madhyahnam": "afternoon",
+    "మధ్యాహ్నం": "afternoon",
+    "sayantram": "evening",
+    "saayantram": "evening",
+    "సాయంత్రం": "evening",
+    "ratri": "night",
+    "రాత్రి": "night",
+    # Hindi
+    "subah": "morning",
+    "सुबह": "morning",
+    "dopahar": "afternoon",
+    "दोपहर": "afternoon",
+    "shaam": "evening",
+    "sham": "evening",
+    "शाम": "evening",
+    "raat": "night",
+    "रात": "night",
+}
 
 
 @dataclass(frozen=True, order=True)
@@ -113,10 +140,12 @@ def staff_free_for(staff_days: list[StaffDay], start: datetime, end: datetime) -
 
 
 def parse_preference(raw: str | None) -> TimePreference:
-    """Accepts morning / afternoon / evening / any, or a time like 18:15, 6pm, 6:15 pm."""
+    """Accepts morning / afternoon / evening / any (or the Telugu and Hindi words for
+    them), or a time like 18:15, 6pm, 6:15 pm."""
     text = (raw or "").strip().lower()
     if text in ("", "any", "anytime", "any time"):
         return TimePreference()
+    text = WINDOW_WORDS.get(text, text)
     if text in WINDOWS:
         return TimePreference(window=WINDOWS[text])
     m = re.fullmatch(r"(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?", text)
