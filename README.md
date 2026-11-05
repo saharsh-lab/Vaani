@@ -203,6 +203,7 @@ infra/postgres/     database role setup
 - One Meta access token serves every business for now. Per-business numbers need Meta's Embedded Signup, with a token stored per business.
 - `channel_events` (message ids kept for dedupe) grows forever until a cleanup job exists. A week of ids is enough.
 - Booking confirmations for voice and web bookings, and handoff alerts to the owner, aren't sent yet. Messages a business starts on WhatsApp need pre-approved templates.
+- Speech-to-text uses Sarvam's `codemix` mode, which keeps English words in English letters; on Bulbul test speech it matched service names that `transcribe` garbled. Voice notes pass the business's service and staff names as hints, but Sarvam's streaming API takes no hints, so live calls can mishear names ("RCT" heard as "RP City"). The agent reads every booking back before confirming it.
 - Voice notes over 30 seconds aren't transcribed. Sarvam's batch API handles up to 2 hours, but it's asynchronous and too slow for a chat reply.
 - The voice pipeline has been tested end to end with LiveKit, but not with real audio or real keys. Tests drive LiveKit's own agent session in text mode with a scripted model, and a local run confirmed the hand-off: token, then agent dispatched, then the clinic's details loaded and the agent listening, then Sarvam's streaming endpoint (rejected with a placeholder key).
 - If Sarvam or Gemini fails mid-call, the session ends and the page shows "Call ended". There's no fallback provider yet; the spec's Whisper fallback would go in LiveKit's `FallbackAdapter`.

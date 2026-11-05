@@ -298,6 +298,9 @@ async def entrypoint(ctx: JobContext) -> None:
             language="unknown",  # detect Telugu / Hindi / English per utterance
             model=s.sarvam_stt_model,
             mode=s.sarvam_stt_mode,
+            # When the caller stops talking, ask Sarvam to finalise right away instead
+            # of waiting for its own silence timeout (final text ~0.5 s after speech).
+            flush_signal=True,
             api_key=s.sarvam_api_key,
         ),
         llm=google.LLM(model=s.gemini_model, api_key=s.gemini_api_key, temperature=0.2),

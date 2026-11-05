@@ -67,7 +67,7 @@ async def test_transcribe_sends_audio_model_and_keyterms():
     assert seen["url"] == SARVAM_STT_URL and seen["key"] == "sk-test"
     body = seen["body"]
     assert b'name="model"\r\n\r\nsaaras:v4' in body
-    assert b'name="mode"\r\n\r\ntranscribe' in body
+    assert b'name="mode"\r\n\r\ncodemix' in body
     assert json.dumps(["RCT consultation", "డాక్టర్"], ensure_ascii=False).encode() in body
     assert b'filename="voice-note.ogg"' in body and b"Content-Type: audio/ogg" in body
 

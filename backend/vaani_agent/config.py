@@ -37,7 +37,10 @@ class AgentSettings(BaseSettings):
     # get a "please type" reply.
     sarvam_api_key: str | None = None
     sarvam_stt_model: str = "saaras:v4"
-    sarvam_stt_mode: str = "transcribe"  # see Sarvam's docs for codemix / translit
+    # codemix keeps English words in English letters ("RCT consultation", "appointment"),
+    # so they match service names; transcribe wrote them in Telugu/Hindi script and
+    # garbled acronyms. Measured on Bulbul speech in Telugu, Hindi and English.
+    sarvam_stt_mode: str = "codemix"
     sarvam_stt_inr_per_hour: float = 29.40  # from the project spec; check current pricing
     voice_note_max_seconds: int = 30  # Sarvam's synchronous API limit
     voice_note_max_bytes: int = 2_000_000

@@ -79,7 +79,7 @@ class SarvamSTT:
         api_key: str,
         *,
         model: str = "saaras:v4",
-        mode: str = "transcribe",
+        mode: str = "codemix",
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self.model = model
