@@ -15,7 +15,7 @@ Demo logins come from `python -m app.seed --demo-activity` in `backend/`.
 | --- | --- | --- |
 | `API_URL` | The FastAPI backend, as this server reaches it. `/api/*` is forwarded there, so the session cookie is first-party | `http://localhost:8000` |
 | `NEXT_PUBLIC_API_URL` | The API as browsers reach it (the talk-to-us page lives there) | `http://localhost:8000` |
-| `NEXT_PUBLIC_SITE_URL` | This site's public address, for canonical links, the sitemap and link previews | `http://localhost:3000` |
+| `NEXT_PUBLIC_SITE_URL` | This site's public address, for canonical links, the sitemap and link previews | on Vercel, the project's production domain; otherwise `http://localhost:3000` |
 | `NEXT_PUBLIC_CONTACT_EMAIL` | Where privacy and support questions go; shown on the legal pages | a placeholder: **set it before launch** |
 
 The `NEXT_PUBLIC_*` values are built into the pages, so set them before building.

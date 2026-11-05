@@ -64,7 +64,7 @@ The API runs the migrations itself every time it starts.
    | --- | --- |
    | `API_URL` | `https://<your-api-domain>` |
    | `NEXT_PUBLIC_API_URL` | `https://<your-api-domain>` |
-   | `NEXT_PUBLIC_SITE_URL` | the site's own address, e.g. `https://vaani.vercel.app` (canonical links, sitemap, link previews) |
+   | `NEXT_PUBLIC_SITE_URL` | optional on Vercel, which provides the production domain; set it elsewhere (canonical links, sitemap, link previews) |
    | `NEXT_PUBLIC_CONTACT_EMAIL` | the email for privacy and support questions, shown on `/privacy` and `/terms` |
 
 3. Deploy, open the Vercel URL, and create your business at `/signup`.
