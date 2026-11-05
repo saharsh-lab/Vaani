@@ -96,6 +96,7 @@ Follow "Connect WhatsApp" in the README. The callback URL is `https://<your-api-
 - [ ] Sign up on the Vercel URL; the overview loads and the setup checklist shows what's left
 - [ ] Sign in as a staff member: only Bookings and Callbacks appear
 - [ ] Add a booking from the dashboard; a taken slot suggests free times nearby
+- [ ] Booking page `https://<vercel-url>/c/<your-business-slug>`: book a time, and it appears on the dashboard as Online
 - [ ] Voice page: the call connects and the worker logs `call … ended` with latency and cost
 - [ ] Sentry (if set): the project shows the `api` environment
 

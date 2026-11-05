@@ -24,7 +24,7 @@ export type Booking = {
   start_at: string;
   end_at: string;
   status: "confirmed" | "cancelled" | "completed" | "no_show";
-  source: "voice" | "whatsapp" | "web_chat" | "dashboard";
+  source: "voice" | "whatsapp" | "web_chat" | "dashboard" | "online";
   service: string;
   staff: string;
   staff_id: string;
@@ -129,4 +129,45 @@ export type Faq = {
   source_type: "faq" | "pdf" | "text";
   chunks: number;
   uploaded_at: string;
+};
+
+// The public booking page (/c/[slug]) ------------------------------------------
+
+export type PublicService = { name: string; duration_min: number; price_inr: number | null };
+
+export type PublicHours = { weekday: number; open_time: string; close_time: string };
+
+export type PublicBusiness = {
+  slug: string;
+  name: string;
+  type: string;
+  address: string | null;
+  phone: string | null;
+  languages: string[];
+  timezone: string;
+  today: string;
+  book_days_ahead: number;
+  hours: PublicHours[];
+  services: PublicService[];
+};
+
+export type FreeTime = { start_at: string; label: string; staff: string };
+
+export type DaySlots = {
+  service: string;
+  duration_min: number;
+  price_inr: number | null;
+  date: string;
+  slots: FreeTime[];
+  next_free_date: string | null;
+};
+
+export type PublicBooking = {
+  booking_id: string;
+  service: string;
+  staff: string;
+  start_at: string;
+  label: string;
+  status: string;
+  customer_name: string | null;
 };

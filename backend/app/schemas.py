@@ -58,7 +58,7 @@ class CreateBookingIn(BaseModel):
     phone: str
     staff: str | None = None
     # Filled by the agent runtime, not the LLM:
-    source: Literal["voice", "whatsapp", "web_chat", "dashboard"] = "web_chat"
+    source: Literal["voice", "whatsapp", "web_chat", "dashboard", "online"] = "web_chat"
     conversation_id: uuid.UUID | None = None
 
 
@@ -187,3 +187,50 @@ class AgentContextOut(BaseModel):
     services: list[ServiceInfo]
     hours: list[HoursInfo]
     staff: list[str]
+
+
+# The public booking page -------------------------------------------------------
+
+
+class PublicService(BaseModel):
+    name: str
+    duration_min: int
+    price_inr: float | None
+
+
+class PublicHours(BaseModel):
+    weekday: int  # 0 = Monday
+    open_time: dt.time
+    close_time: dt.time
+
+
+class PublicBusinessOut(BaseModel):
+    """What a patient sees about the business. No ids, staff or internal settings."""
+
+    slug: str
+    name: str
+    type: str
+    address: str | None
+    phone: str | None
+    languages: list[str]
+    timezone: str
+    today: dt.date  # in the business's timezone
+    book_days_ahead: int
+    hours: list[PublicHours]
+    services: list[PublicService]
+
+
+class DaySlotsOut(BaseModel):
+    service: str
+    duration_min: int
+    price_inr: float | None
+    date: dt.date
+    slots: list[Slot]
+    next_free_date: dt.date | None = None  # when this day has nothing free
+
+
+class PublicBookingIn(BaseModel):
+    service: str
+    start_at: dt.datetime
+    customer_name: str = Field(min_length=1, max_length=100)
+    phone: str = Field(min_length=10, max_length=20)

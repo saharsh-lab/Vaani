@@ -112,6 +112,7 @@ const CHANNELS: Record<string, string> = {
   whatsapp: "WhatsApp",
   web_chat: "Web chat",
   dashboard: "Front desk",
+  online: "Online",
 };
 
 export function ChannelBadge({ channel }: { channel: string }) {

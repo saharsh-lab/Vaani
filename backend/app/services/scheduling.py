@@ -13,7 +13,7 @@ from app import clock
 from app.config import get_settings
 from app.errors import InvalidRequest, NotFound
 from app.models import BlockedSlot, Booking, Business, Service, Staff, StaffService, WorkingHours
-from app.schemas import AvailabilityOut, CheckAvailabilityIn, Slot
+from app.schemas import AvailabilityOut, CheckAvailabilityIn, DaySlotsOut, Slot
 from app.services.availability import (
     Interval,
     StaffDay,
@@ -198,6 +198,45 @@ async def find_slots(
         slots = [Slot(start_at=s, label=slot_label(s), staff=starts[s].name) for s in chosen]
         return day, slots, matched
     return None, [], False
+
+
+async def day_slots(
+    session: AsyncSession, business: Business, service_name: str, day: date
+) -> DaySlotsOut:
+    """Every free start time on one day, for the booking page (the agent offers
+    three; a form can show them all)."""
+    settings = get_settings()
+    tz = ZoneInfo(business.timezone)
+    service = await resolve_service(session, service_name)
+    today = clock.now().astimezone(tz).date()
+    if not today <= day < today + timedelta(days=settings.public_book_days_ahead):
+        raise InvalidRequest(f"Choose a day in the next {settings.public_book_days_ahead} days.")
+    staff_days = await load_staff_days(session, tz=tz, service_id=service.id, day=day)
+    starts = free_starts(
+        staff_days,
+        timedelta(minutes=service.duration_min),
+        timedelta(minutes=settings.slot_step_min),
+        earliest_bookable(tz),
+    )
+    slots = [Slot(start_at=s, label=slot_label(s), staff=starts[s].name) for s in sorted(starts)]
+    next_free = None
+    if not slots:
+        next_free, _, _ = await find_slots(
+            session,
+            tz=tz,
+            service=service,
+            start_day=day + timedelta(days=1),
+            pref=TimePreference(),
+            count=1,
+        )
+    return DaySlotsOut(
+        service=service.name,
+        duration_min=service.duration_min,
+        price_inr=float(service.price_inr) if service.price_inr is not None else None,
+        date=day,
+        slots=slots,
+        next_free_date=next_free,
+    )
 
 
 async def check_availability(

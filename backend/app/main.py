@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import accounts, agent, dashboard, tools, voice, whatsapp
+from app.api import accounts, agent, dashboard, public, tools, voice, whatsapp
 from app.config import get_settings, production_problems
 from app.errors import VaaniError
 from vaani_agent.config import get_agent_settings
@@ -27,6 +27,7 @@ app.include_router(whatsapp.router)
 app.include_router(voice.router)
 app.include_router(accounts.router)
 app.include_router(dashboard.router)
+app.include_router(public.router)
 
 
 @app.exception_handler(VaaniError)

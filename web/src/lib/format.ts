@@ -77,11 +77,18 @@ export function rupees(value: number | null, digits = 2): string {
   return `₹${value.toLocaleString("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 }
 
-/** +919876543210 -> +91 98765 43210 */
+// Two-digit area codes of the big cities; other landlines keep their digits together.
+const METRO_CODES = new Set(["11", "20", "22", "33", "40", "44", "79", "80"]);
+
+/** +919876543210 -> +91 98765 43210; landline +914023456789 -> +91 40 2345 6789 */
 export function phone(value: string | null): string {
   if (!value) return "–";
-  const m = value.match(/^\+91(\d{5})(\d{5})$/);
-  return m ? `+91 ${m[1]} ${m[2]}` : value;
+  const m = value.match(/^\+91(\d{10})$/);
+  if (!m) return value;
+  const n = m[1];
+  if ("6789".includes(n[0])) return `+91 ${n.slice(0, 5)} ${n.slice(5)}`;
+  if (METRO_CODES.has(n.slice(0, 2))) return `+91 ${n.slice(0, 2)} ${n.slice(2, 6)} ${n.slice(6)}`;
+  return `+91 ${n}`;
 }
 
 /** "18:30:00" -> "18:30" */

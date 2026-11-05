@@ -37,6 +37,24 @@ function Channels() {
       <div className="grid max-w-3xl gap-4">
         <Card>
           <CardHeader>
+            <CardTitle>Online booking page</CardTitle>
+            <CardDescription>
+              Patients pick a service and a free time, and the booking lands in your calendar. Share the link on Google,
+              Instagram or WhatsApp. It has a talk-to-us button too.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <a href={`/c/${business.slug}`} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline" })}>
+              <ExternalLink /> Open
+            </a>
+            <Button variant="outline" onClick={() => copy(`${window.location.origin}/c/${business.slug}`)}>
+              <Copy /> Copy link
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Talk-to-us button for your website</CardTitle>
             <CardDescription>Customers tap it and speak to Vaani in their browser. Calls end after 5 minutes.</CardDescription>
           </CardHeader>

@@ -10,6 +10,7 @@ An AI receptionist for small Indian businesses. It answers calls and WhatsApp me
 - [ ] Booking confirmations and owner handoff alerts on WhatsApp (needs approved message templates)
 - [x] **Knowledge base search in any language:** hybrid keyword + Gemini-embedding search (pgvector), PDF and text uploads; a Telugu or Hindi question finds the English FAQ that answers it
 - [x] **Real-time voice:** browser "Talk to us" widget over LiveKit, Sarvam streaming speech-to-text, Gemini with the same six tools, Sarvam Bulbul voice; per-reply latency and per-call cost saved
+- [x] **Public booking page** for each business (`/c/<slug>`): services and prices, hours, every free time for a day, book without signing in, and a talk-to-us button; same booking rules as Vaani
 - [x] **Owner and staff dashboard** (Next.js + shadcn/ui): sign-up, role-based access, bookings calendar, callback queue, conversations with transcripts and cost, settings, FAQs, team, channels
 - [x] **Eval suite:** 50 scripted conversations and 100 labelled utterances run against real Gemini, scored from the database plus an LLM judge; nightly in CI, failing below 90% booking success
 - [x] **Ready to deploy:** production safety checks, Docker images for the API and the voice worker, Sentry; step-by-step guide in [DEPLOY.md](DEPLOY.md) (Neon, Railway, Vercel, LiveKit Cloud)
@@ -63,6 +64,8 @@ Sign in as `owner@sri-dental.example.com` / `vaani-demo-owner` or `staff@sri-den
 | Conversations: every call and chat with transcript, tool calls, latency and cost | ✅ | |
 | Settings: business, greeting, languages, hours (split shifts, per staff), services, staff, days off | ✅ | |
 | Knowledge base and team logins | ✅ | |
+
+Patients book at http://localhost:3000/c/sri-dental: pick a service, a day and a free time, then enter a name and mobile number. No login. The page uses `/v1/public/<slug>` on the API, which runs through the same booking engine (opening hours, staff, the double-booking constraint) and allows 5 bookings per visitor per hour. Its bookings show as **Online** on the dashboard, and the Channels page has the link to share.
 
 The API enforces the roles (staff get 403 on owner endpoints) and each request runs in the user's business under row-level security. Changes take effect on the agent's next conversation: a new FAQ is searchable immediately, and a day off stops Vaani offering that day.
 
@@ -205,7 +208,8 @@ infra/postgres/     database role setup
 - WhatsApp turns run as FastAPI background tasks, with a per-customer lock inside one process. Running more than one API instance, or surviving restarts mid-turn, needs the ARQ/Redis queue from the spec.
 - One Meta access token serves every business for now. Per-business numbers need Meta's Embedded Signup, with a token stored per business.
 - `channel_events` (message ids kept for dedupe) grows forever until a cleanup job exists. A week of ids is enough.
-- Booking confirmations for voice and web bookings, and handoff alerts to the owner, aren't sent yet. Messages a business starts on WhatsApp need pre-approved templates.
+- Online bookings have no OTP or captcha yet: anyone can book with any number, held back only by the per-visitor limit. Patients change or cancel by calling or talking to Vaani, since a "manage my booking" page would need the number verified first.
+- Booking confirmations for voice, web and online bookings, and handoff alerts to the owner, aren't sent yet. Messages a business starts on WhatsApp need pre-approved templates.
 - Speech-to-text uses Sarvam's `codemix` mode, which keeps English words in English letters; on Bulbul test speech it matched service names that `transcribe` garbled. Voice notes pass the business's service and staff names as hints, but Sarvam's streaming API takes no hints, so live calls can mishear names ("RCT" heard as "RP City"). The agent reads every booking back before confirming it.
 - Voice notes over 30 seconds aren't transcribed. Sarvam's batch API handles up to 2 hours, but it's asynchronous and too slow for a chat reply.
 - Voice latency is above the spec's target (p50 under 1.0 s, p95 under 1.5 s). In test calls on 5 Nov 2026, the caller heard Vaani 2.5-4 s after they stopped speaking: about 0.7 s for the transcript, 1.5-3 s for Gemini, and 0.2 s for Bulbul's first audio. Gemini 3.5 Flash-Lite was overloaded that day (503 and 504 errors), so these numbers may improve on a normal day. Beyond that, the options are a paid Gemini tier, a faster model, or starting the reply from Sarvam's interim transcripts.

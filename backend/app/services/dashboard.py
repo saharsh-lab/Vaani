@@ -357,7 +357,8 @@ async def overview(db: AsyncSession, business: Business) -> Overview:
     agent_bookings = await db.scalar(
         select(func.count())
         .select_from(Booking)
-        .where(Booking.created_at >= since, Booking.source != "dashboard")
+        # Made by Vaani: not by the team, and not by patients on the booking page.
+        .where(Booking.created_at >= since, Booking.source.not_in(("dashboard", "online")))
     )
     latency = (await db.execute(VOICE_LATENCY_SQL, {"since": since})).one()
 

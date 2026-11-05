@@ -2,8 +2,6 @@ import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 export default function Home() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-4 py-16">
@@ -22,9 +20,9 @@ export default function Home() {
         <Link href="/login" className={buttonVariants({ size: "lg", variant: "outline" })}>
           Sign in
         </Link>
-        <a href={`${API}/voice/sri-dental`} className={buttonVariants({ size: "lg", variant: "ghost" })}>
-          Talk to the demo clinic
-        </a>
+        <Link href="/c/sri-dental" className={buttonVariants({ size: "lg", variant: "ghost" })}>
+          See the demo clinic
+        </Link>
       </div>
     </main>
   );

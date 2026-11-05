@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     slot_step_min: int = 15  # slots start on the quarter hour
     booking_lead_min: int = 30  # earliest bookable time is now + this
     availability_search_days: int = 7  # how far ahead to look when a day is full
+    # The public booking page: how far ahead patients can book, and per-IP limits
+    # (the page needs no login, so these keep bots from filling the calendar).
+    public_book_days_ahead: int = 14
+    public_bookings_per_ip_per_hour: int = 5
+    public_lookups_per_ip_per_hour: int = 300
 
     # Dashboard logins. Set a long random DASHBOARD_JWT_SECRET anywhere public.
     dashboard_jwt_secret: str = "dev-only-dashboard-secret-change-me-0123456789"
