@@ -32,7 +32,10 @@ TOOLS: list[dict] = [
                 "date": {"type": "string", "description": "YYYY-MM-DD"},
                 "preferred_time": {
                     "type": "string",
-                    "description": "morning, afternoon, evening, any, or a time like 18:15",
+                    "description": (
+                        "morning (before 12 PM), afternoon (12-5 PM), evening (after 5 PM; "
+                        "also sayantram / సాయంత్రం / shaam / शाम), any, or a time like 18:15"
+                    ),
                 },
                 "staff": {"type": "string", "description": "Only if the customer asks for someone"},
             },

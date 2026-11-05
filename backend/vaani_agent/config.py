@@ -60,6 +60,17 @@ class AgentSettings(BaseSettings):
         "en-IN": "ishita_en_customer",
     }
     sarvam_tts_inr_per_10k_chars: float = 10.0  # from the project spec; check current pricing
+    # Gemini 3 thinks before answering, and on a call that wait is the slowest part of a
+    # reply. On Telugu booking requests "low" answered in ~1.5 s against 2.5-6 s for the
+    # default, with the same tool calls. Empty = the model's default. Chat channels
+    # always use the default.
+    voice_thinking_level: str | None = "low"
+    # Used when the main model fails (503 "high demand" fails fast) or runs past the deadline.
+    voice_fallback_model: str | None = "gemini-3.1-flash-lite"
+    # The deadline covers the whole streamed reply, so a slow reply is cut off when it
+    # passes; at 10 s, replies under load were cut mid-sentence. Gemini rejects
+    # deadlines under 10 s (400 INVALID_ARGUMENT).
+    voice_llm_timeout_seconds: float = Field(default=15.0, ge=10.0)
     voice_max_call_seconds: int = 300  # caps cost per call, and abuse of the public demo
     voice_calls_per_ip_per_hour: int = 20
     # Warm worker processes waiting for calls; each holds the VAD model (~150 MB).

@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from livekit import api as livekit
-from livekit.agents import AgentSession, llm
+from livekit.agents import AgentSession, ErrorEvent, llm
 from livekit.agents.metrics import AgentSessionUsage, LLMModelUsage, STTModelUsage, TTSModelUsage
 from sqlalchemy import select
 
@@ -19,14 +19,18 @@ from app.models import Booking, Conversation, Message
 from tests.fakes import ScriptedLiveKitLLM
 from vaani_agent.api_client import VaaniApi
 from vaani_agent.config import VOICE_AGENT_NAME, AgentSettings, get_agent_settings
-from vaani_agent.prompt import build_system_prompt
+from vaani_agent.prompt import build_system_prompt, voice_greeting_instructions
 from vaani_agent.tools import ToolContext
 from vaani_agent.voice import (
+    ONE_MOMENT,
+    SAY_AGAIN,
     CallRecorder,
+    StockPhrases,
     VaaniVoiceAgent,
     livekit_tools,
     tts_language,
     tts_voice,
+    voice_llm,
 )
 
 
@@ -106,7 +110,6 @@ async def test_voice_agent_books_and_records_the_call(clinic):
         context = await api.context()
         conversation = await api.start_conversation("voice")
         recorder = CallRecorder(api, AgentSettings(), conversation["id"])
-        tools = livekit_tools(api, ToolContext(conversation["id"], "voice"), recorder)
         model = ScriptedLiveKitLLM(
             [
                 (
@@ -132,6 +135,11 @@ async def test_voice_agent_books_and_records_the_call(clinic):
         )
         async with AgentSession(llm=model) as session:
             recorder.attach(session)
+            # With "one moment" spoken from inside the tools, as on a real call.
+            phrases = StockPhrases(session, "te-IN")
+            tools = livekit_tools(
+                api, ToolContext(conversation["id"], "voice"), recorder, phrases.one_moment
+            )
             await session.start(VaaniVoiceAgent(context, tools))
 
             first = await session.run(user_input="రేపు evening RCT consultation కావాలి")
@@ -276,8 +284,70 @@ async def test_voice_prompt_asks_for_native_script_and_spoken_greeting(client):
     prompt = build_system_prompt(context, channel="voice", verified_phone=None)
     assert "write Telugu in Telugu script and Hindi in Devanagari" in prompt
     assert "Greet the caller first" in prompt
+    assert "Greet only once" in prompt
+    assert "check availability right away" in prompt
     assert "Read it back digit by digit" in prompt
     assert "Romanised Telugu" not in prompt
+
+
+def test_greeting_is_spoken_in_the_business_languages_own_script():
+    assert voice_greeting_instructions({"languages": ["te", "en"]}) == (
+        "Greet the caller now, in Telugu, written in Telugu script."
+    )
+    assert voice_greeting_instructions({"languages": ["hi"]}).endswith("written in Devanagari.")
+    assert voice_greeting_instructions({"languages": ["en"]}) == "Greet the caller now, in English."
+
+
+class SpokenSession:
+    def __init__(self):
+        self.spoken = []
+
+    def say(self, text, **kwargs):
+        self.spoken.append(text)
+
+
+def test_one_moment_is_said_once_per_reply_in_the_callers_language():
+    session = SpokenSession()
+    phrases = StockPhrases(session, "te-IN")
+    reply = SimpleNamespace(speech_handle=SimpleNamespace(id="speech_1"))
+    phrases.one_moment(reply)
+    phrases.one_moment(reply)  # a second tool in the same reply
+    phrases.language = "hi-IN"  # the caller switched to Hindi
+    phrases.one_moment(SimpleNamespace(speech_handle=SimpleNamespace(id="speech_2")))
+    phrases.language = "ta-IN"  # no phrase for this language: stay quiet
+    phrases.one_moment(SimpleNamespace(speech_handle=SimpleNamespace(id="speech_3")))
+    assert session.spoken == [ONE_MOMENT["te-IN"], ONE_MOMENT["hi-IN"]]
+
+
+def llm_error(recoverable: bool) -> ErrorEvent:
+    error = llm.LLMError(
+        timestamp=0, label="gemini", error=RuntimeError("503"), recoverable=recoverable
+    )
+    return ErrorEvent(error=error, source=None)
+
+
+def test_caller_hears_an_apology_only_when_every_model_failed():
+    session = SpokenSession()
+    phrases = StockPhrases(session, "te-IN")
+    phrases.on_error(llm_error(recoverable=True))  # being retried
+    phrases.on_error(llm_error(recoverable=False))
+    assert session.spoken == [SAY_AGAIN["te-IN"]]
+
+
+def test_llm_deadline_stays_above_geminis_minimum():
+    with pytest.raises(ValueError):
+        AgentSettings(voice_llm_timeout_seconds=3)
+
+
+def test_calls_fall_back_to_a_second_model():
+    s = AgentSettings(gemini_api_key="test", voice_fallback_model="gemini-3.1-flash-lite")
+    model = voice_llm(s)
+    assert isinstance(model, llm.FallbackAdapter)
+    assert [m.model for m in model._llm_instances] == [s.gemini_model, "gemini-3.1-flash-lite"]
+    assert model._attempt_timeout == s.voice_llm_timeout_seconds
+    assert not isinstance(
+        voice_llm(AgentSettings(gemini_api_key="t", voice_fallback_model="")), llm.FallbackAdapter
+    )
 
 
 def test_each_language_gets_its_own_voice():

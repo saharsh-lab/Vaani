@@ -9,6 +9,18 @@ from datetime import datetime, time, timedelta
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 LANGUAGE_NAMES = {"te": "Telugu", "hi": "Hindi", "en": "English", "ta": "Tamil", "kn": "Kannada"}
 CHANNELS = {"voice": "a voice call", "whatsapp": "WhatsApp", "web_chat": "the website chat"}
+# Text-to-speech reads each language best in its own script.
+SCRIPTS = {"te": "Telugu script", "hi": "Devanagari", "ta": "Tamil script", "kn": "Kannada script"}
+
+
+def voice_greeting_instructions(ctx: dict) -> str:
+    """What the voice agent says first. Greetings are often typed in English letters
+    ("Namaskaram! ... swagatam"), and the model copies them as written, which the
+    text-to-speech then reads with an English accent."""
+    code = ctx["languages"][0] if ctx["languages"] else "en"
+    language = LANGUAGE_NAMES.get(code, "English")
+    script = SCRIPTS.get(code)
+    return f"Greet the caller now, in {language}" + (f", written in {script}." if script else ".")
 
 
 def _clock(t: time) -> str:
@@ -78,7 +90,10 @@ def build_system_prompt(ctx: dict, *, channel: str, verified_phone: str | None) 
         )
     elif channel == "voice":
         opening = (
-            f'The call has just connected. Greet the caller first, briefly, like "{greeting}".'
+            f'The call has just connected. Greet the caller first, briefly, like "{greeting}", '
+            "written in that language's own script. Greet only once; after that, get straight "
+            "to what they need. When they ask for an appointment and you know the service and "
+            "day, check availability right away instead of asking whether to."
         )
     else:
         opening = f'You have already greeted them with: "{greeting}"'
@@ -97,7 +112,12 @@ def build_system_prompt(ctx: dict, *, channel: str, verified_phone: str | None) 
         )
 
     if channel == "voice":
-        length_rule = "Keep replies to 1-2 short sentences. No markdown, lists or emoji: replies are spoken aloud."
+        length_rule = (
+            "Keep replies to 1-2 short sentences. No markdown, lists or emoji: replies are spoken aloud. "
+            'Say dates and times the way people say them ("tomorrow", "Friday the 6th", "5:30 in the '
+            'evening"), never like 2026-11-06. When you use a tool, call it straight away without '
+            'saying anything first: the caller hears "one moment" automatically.'
+        )
     else:
         length_rule = "Keep replies short, 1-3 sentences, in plain text without markdown."
 
