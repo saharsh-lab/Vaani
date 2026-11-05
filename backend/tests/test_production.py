@@ -59,7 +59,8 @@ async def test_plain_http_is_redirected_to_https():
 
     transport = httpx.ASGITransport(app=https_app())
     async with httpx.AsyncClient(transport=transport, base_url="http://api.example.com") as c:
-        r = await c.post("/v1/things?x=1")
+        # What Railway's proxy forwards when a visitor connected over plain HTTP.
+        r = await c.post("/v1/things?x=1", headers={"x-forwarded-proto": "http"})
     assert r.status_code == 308  # keeps the POST
     assert r.headers["location"] == "https://api.example.com/v1/things?x=1"
 
@@ -73,6 +74,16 @@ async def test_https_responses_tell_browsers_to_stay_on_https():
     assert r.status_code == 200
     assert r.headers["strict-transport-security"].startswith("max-age=63072000")
     assert r.headers["x-content-type-options"] == "nosniff"
+
+
+async def test_the_api_can_call_itself_in_process():
+    # The WhatsApp agent calls the tools at http://vaani.internal, with no proxy in between.
+    import httpx
+
+    transport = httpx.ASGITransport(app=https_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://vaani.internal") as c:
+        r = await c.post("/v1/things")
+    assert r.status_code == 200 and r.json() == {"made": True}
 
 
 async def test_health_checks_still_work_over_plain_http():
