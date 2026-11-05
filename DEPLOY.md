@@ -49,7 +49,8 @@ The API runs the migrations itself every time it starts.
    | `COOKIE_SECURE` | `true` |
    | `GEMINI_API_KEY`, `GEMINI_MODEL` | your key, `gemini-3.5-flash-lite` |
    | `SARVAM_API_KEY` | for WhatsApp voice notes |
-   | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | from step 4 (add them once you have them) |
+   | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | from step 4.1: get them first, because in production the API refuses to start with LiveKit's dev secret |
+   | `PORT` | `8000`, and use 8000 when Railway asks which port to expose |
    | `SENTRY_DSN` | optional |
 
 4. When it's deployed, `https://<your-api-domain>/health` returns `{"ok":true}`.
