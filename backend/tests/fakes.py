@@ -30,10 +30,12 @@ class ScriptedModel:
     def __init__(self, responses: list[types.GenerateContentResponse]) -> None:
         self.responses = list(responses)
         self.requests: list[list[types.Content]] = []
+        self.models: list[str] = []  # which model each request asked for
         self.aio = SimpleNamespace(models=self)
 
     async def generate_content(self, *, model, contents, config):
         self.requests.append(list(contents))
+        self.models.append(model)
         response = self.responses.pop(0)
         if isinstance(response, Exception):
             raise response

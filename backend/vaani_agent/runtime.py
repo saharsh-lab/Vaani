@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from google import genai
+from google.genai import errors as genai_errors
 from google.genai import types
 
 from vaani_agent.api_client import VaaniApi
@@ -139,12 +140,29 @@ class AgentSession:
         await self._save(transcript)
         return text
 
+    async def _generate(self):
+        """One model call. If Gemini is overloaded or down (5xx), try the fallback model
+        once: on 5 Nov 2026 3.5 Flash-Lite returned 503s for long stretches while 3.1
+        Flash-Lite answered, and each accepts the other's tool-call history."""
+        try:
+            return await self.llm.aio.models.generate_content(
+                model=self.settings.gemini_model, contents=self.history, config=self.config
+            )
+        except genai_errors.ServerError as exc:
+            fallback = self.settings.gemini_fallback_model
+            if not fallback or fallback == self.settings.gemini_model:
+                raise
+            log.warning(
+                "%s failed (%s); answering with %s", self.settings.gemini_model, exc.code, fallback
+            )
+            return await self.llm.aio.models.generate_content(
+                model=fallback, contents=self.history, config=self.config
+            )
+
     async def _run_model(self, transcript: list[dict]) -> str:
         """Call the model, running tools it asks for, until it answers in text."""
         for _ in range(MAX_TOOL_ROUNDS):
-            response = await self.llm.aio.models.generate_content(
-                model=self.settings.gemini_model, contents=self.history, config=self.config
-            )
+            response = await self._generate()
             self._count_usage(response.usage_metadata)
             candidate = response.candidates[0] if response.candidates else None
             if candidate is None or candidate.content is None:

@@ -16,6 +16,9 @@ class AgentSettings(BaseSettings):
         default=None, validation_alias=AliasChoices("GEMINI_API_KEY", "GOOGLE_API_KEY")
     )
     gemini_model: str = "gemini-3.5-flash-lite"
+    # WhatsApp and web chat answer with this when gemini_model returns a server error
+    # (503 "high demand"). Empty = no fallback (the evals score one model at a time).
+    gemini_fallback_model: str | None = "gemini-3.1-flash-lite"
     # Knowledge-base search across languages; 768 dimensions to match the database.
     embedding_model: str = "gemini-embedding-001"
 

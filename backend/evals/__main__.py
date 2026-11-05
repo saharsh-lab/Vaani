@@ -28,6 +28,7 @@ def configure_environment(pg: str) -> None:
         f"postgresql+psycopg://vaani_admin:vaani_admin@{pg}/vaani_eval"
     )
     os.environ["AGENT_API_KEY"] = "eval-key"
+    os.environ["GEMINI_FALLBACK_MODEL"] = ""  # score one model, not a mix
 
 
 def prepare_database(pg: str) -> None:

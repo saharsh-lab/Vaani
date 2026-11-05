@@ -3,6 +3,7 @@ API. This is the seed of the conversation eval suite."""
 
 import httpx
 import pytest
+from google.genai import errors as genai_errors
 from sqlalchemy import func, select
 
 from app.db import system_session
@@ -141,6 +142,31 @@ async def test_failed_model_call_leaves_history_clean(clinic):
     async with api_for(clinic) as api:
         session = await scripted_session(api, ScriptedModel([RuntimeError("model down")]))
         with pytest.raises(RuntimeError):
+            await session.reply("hello")
+        assert session.history == []
+
+
+def overloaded() -> genai_errors.ServerError:
+    return genai_errors.ServerError(
+        503, {"error": {"code": 503, "message": "high demand", "status": "UNAVAILABLE"}}
+    )
+
+
+async def test_an_overloaded_model_hands_the_turn_to_the_fallback(clinic):
+    async with api_for(clinic) as api:
+        model = ScriptedModel([overloaded(), model_says("Hi!")])
+        session = await scripted_session(api, model)
+        assert await session.reply("hello") == "Hi!"
+    settings = AgentSettings()
+    assert model.models == [settings.gemini_model, settings.gemini_fallback_model]
+    assert [c.role for c in session.history] == ["user", "model"]
+
+
+async def test_without_a_fallback_the_error_reaches_the_channel(clinic, monkeypatch):
+    monkeypatch.setenv("GEMINI_FALLBACK_MODEL", "")
+    async with api_for(clinic) as api:
+        session = await scripted_session(api, ScriptedModel([overloaded()]))
+        with pytest.raises(genai_errors.ServerError):
             await session.reply("hello")
         assert session.history == []
 
