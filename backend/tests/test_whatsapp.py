@@ -271,6 +271,33 @@ async def test_unknown_number_and_status_updates_are_ignored(client, wa):
     assert wa.sent == []
 
 
+async def test_failed_deliveries_are_logged_with_metas_reason(client, wa, caplog):
+    report = webhook("hi")
+    value = report["entry"][0]["changes"][0]["value"]
+    del value["messages"]
+    value["statuses"] = [
+        {"id": "wamid.out1", "status": "delivered", "recipient_id": "919876543210"},
+        {
+            "id": "wamid.out2",
+            "status": "failed",
+            "recipient_id": "919876543210",
+            "errors": [
+                {
+                    "code": 131030,
+                    "title": "Recipient phone number not in allowed list",
+                    "error_data": {"details": "Add the number to the allowed list"},
+                }
+            ],
+        },
+    ]
+    with caplog.at_level("INFO", logger="app.api.whatsapp"):
+        assert (await post(client, report)).json() == {"accepted": 0}
+    lines = [r.getMessage() for r in caplog.records if r.name == "app.api.whatsapp"]
+    assert "WhatsApp reply to +91******3210: delivered" in lines
+    assert any("131030 Recipient phone number not in allowed list" in line for line in lines)
+    assert not any("9876543210" in line for line in lines)  # numbers stay masked
+
+
 def test_parses_button_and_list_replies():
     payload = webhook("x")
     message = payload["entry"][0]["changes"][0]["value"]["messages"][0]

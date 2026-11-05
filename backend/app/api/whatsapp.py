@@ -21,6 +21,7 @@ from sqlalchemy.dialects.postgresql import insert
 from app.config import get_settings
 from app.db import system_session
 from app.models import Business, ChannelEvent
+from app.phones import mask_phone
 from vaani_agent.api_client import VaaniApi
 from vaani_agent.config import get_agent_settings
 from vaani_agent.runtime import AgentSession
@@ -29,6 +30,7 @@ from vaani_agent.whatsapp import (
     InboundMessage,
     WhatsAppAgent,
     WhatsAppClient,
+    delivery_statuses,
     parse_webhook,
     verify_signature,
 )
@@ -126,6 +128,15 @@ async def receive(
         payload = json.loads(body)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid JSON") from exc
+
+    for report in delivery_statuses(payload):
+        who = mask_phone("+" + report.recipient)
+        if report.errors:
+            log.warning(
+                "WhatsApp couldn't deliver a reply to %s: %s", who, "; ".join(report.errors)
+            )
+        else:
+            log.info("WhatsApp reply to %s: %s", who, report.status)
 
     accepted = 0
     for message in parse_webhook(payload):

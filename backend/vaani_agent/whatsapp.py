@@ -110,6 +110,40 @@ def parse_webhook(payload: dict) -> list[InboundMessage]:
     return messages
 
 
+@dataclass(frozen=True)
+class DeliveryStatus:
+    """Meta's report on a message Vaani sent: sent, delivered, read, or failed."""
+
+    recipient: str  # wa_id, e.g. 919876543210
+    status: str
+    errors: list[str]  # "131030 Recipient phone number not in allowed list: ...", when failed
+
+
+def delivery_statuses(payload: dict) -> list[DeliveryStatus]:
+    """Delivery reports in a webhook. Meta accepts a reply first and reports failures
+    afterwards, so these are the only place a reply that never arrived shows up."""
+    found = []
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            for s in change.get("value", {}).get("statuses", []):
+                errors = [
+                    " ".join(
+                        str(x)
+                        for x in (
+                            e.get("code"),
+                            e.get("title") or e.get("message"),
+                            (e.get("error_data") or {}).get("details"),
+                        )
+                        if x
+                    )
+                    for e in s.get("errors", [])
+                ]
+                found.append(
+                    DeliveryStatus(str(s.get("recipient_id", "")), str(s.get("status")), errors)
+                )
+    return found
+
+
 class WhatsAppClient:
     """Sends through the Graph API. With no access token it only logs (dry run)."""
 
