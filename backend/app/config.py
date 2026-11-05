@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     public_bookings_per_ip_per_hour: int = 5
     public_lookups_per_ip_per_hour: int = 300
 
+    # Sign-in attempts per address and email in 15 minutes, against password guessing.
+    login_attempts_per_15_min: int = 10
     # Dashboard logins. Set a long random DASHBOARD_JWT_SECRET anywhere public.
     dashboard_jwt_secret: str = "dev-only-dashboard-secret-change-me-0123456789"
     dashboard_session_days: int = 7

@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, ApiError, useApi } from "@/lib/api";
 import { addDays, dayLabel, dayOf, phone, time, todayIn } from "@/lib/format";
+import { MOBILE_ERROR, MOBILE_PATTERN } from "@/lib/validation";
 import type { Booking, Service, StaffMember } from "@/lib/types";
 
 type Alternative = { start_at: string; label: string; staff: string };
@@ -311,10 +312,20 @@ function NewBookingDialog({
             </Field>
           </div>
           <Field label="Customer name" htmlFor="customer_name">
-            <Input id="customer_name" name="customer_name" required />
+            <Input id="customer_name" name="customer_name" autoComplete="off" required maxLength={100} />
           </Field>
           <Field label="Mobile number" htmlFor="phone">
-            <Input id="phone" name="phone" type="tel" inputMode="tel" placeholder="98765 43210" required />
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="98765 43210"
+              required
+              maxLength={20}
+              pattern={MOBILE_PATTERN}
+              data-error={MOBILE_ERROR}
+            />
           </Field>
           <ErrorNote error={error} />
           {alternatives.length > 0 && (

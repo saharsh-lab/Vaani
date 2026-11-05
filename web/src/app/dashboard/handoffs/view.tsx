@@ -91,7 +91,7 @@ export default function HandoffsPage() {
                   </span>
                   <div className="flex gap-2">
                     {user.role === "owner" && (
-                      <Link href={`/dashboard/conversations/${h.conversation_id}`} className="text-primary hover:underline">
+                      <Link href={`/dashboard/conversations/${h.conversation_id}`} className="text-primary underline underline-offset-4 hover:decoration-2">
                         Transcript
                       </Link>
                     )}

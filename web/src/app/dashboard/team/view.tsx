@@ -136,13 +136,13 @@ function AddMember({ open, onOpenChange, onDone }: { open: boolean; onOpenChange
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-3">
           <Field label="Name" htmlFor="m-name">
-            <Input id="m-name" name="name" required />
+            <Input id="m-name" name="name" required maxLength={80} />
           </Field>
           <Field label="Email" htmlFor="m-email">
-            <Input id="m-email" name="email" type="email" required />
+            <Input id="m-email" name="email" type="email" autoComplete="off" required maxLength={254} />
           </Field>
           <Field label="Temporary password" htmlFor="m-password" hint="At least 8 characters.">
-            <Input id="m-password" name="password" type="text" minLength={8} required autoComplete="off" />
+            <Input id="m-password" name="password" type="text" minLength={8} maxLength={200} required autoComplete="off" />
           </Field>
           <Field label="Role" htmlFor="m-role">
             <NativeSelect id="m-role" name="role" defaultValue="staff" className="w-full">

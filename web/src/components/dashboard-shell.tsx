@@ -91,9 +91,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   {me.user.name ?? me.user.email} · {me.user.role === "owner" ? "Owner" : "Staff"}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={signOut} className="md:hidden">
-                <LogOut /> Sign out
-              </Button>
+              <div className="flex shrink-0 items-center gap-1 md:hidden">
+                <Button variant="ghost" size="icon" onClick={() => setChangingPassword(true)} aria-label="Change password">
+                  <KeyRound />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut /> Sign out
+                </Button>
+              </div>
             </div>
             <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:overflow-visible md:pb-0">
               {items.map(({ href, label, icon: Icon }) => {

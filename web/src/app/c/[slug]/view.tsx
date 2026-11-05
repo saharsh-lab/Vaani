@@ -3,18 +3,19 @@
 import { CalendarCheck, CheckCircle2, Clock, MapPin, Mic, Phone } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field } from "@/components/kit";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api, useApi } from "@/lib/api";
-import { addDays, dayOf, languageName, phone as formatPhone, rupees, time } from "@/lib/format";
+import { addDays, dayOf, joinAnd, languageName, phone as formatPhone, rupees, time } from "@/lib/format";
 import type { DaySlots, FreeTime, PublicBooking, PublicBusiness, PublicHours } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { MOBILE_ERROR, MOBILE_PATTERN } from "@/lib/validation";
 
 // Where the API (and its /voice page) is reachable from the public internet.
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -37,10 +38,6 @@ function spansFor(hours: PublicHours[], weekday: number): string {
   return spans.length ? spans.join(", ") : "Closed";
 }
 
-/** "Telugu, Hindi and English" */
-function listOf(items: string[]): string {
-  return items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : (items[0] ?? "");
-}
 
 /** Consecutive days with the same hours on one line: "Mon–Sat: 10:00 AM–1:30 PM, …". */
 function hoursLines(hours: PublicHours[]): { days: string; text: string; weekdays: number[] }[] {
@@ -76,18 +73,9 @@ function hourIn(iso: string, timeZone: string): number {
   return Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone }).format(new Date(iso)));
 }
 
-function tenDigits(value: string): boolean {
-  const digits = value.replace(/\D/g, "");
-  return digits.length === 10 || (digits.length === 12 && digits.startsWith("91"));
-}
-
 export default function ClinicPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data: clinic, error } = useApi<PublicBusiness>(`/v1/public/${slug}`, { revalidateOnFocus: false });
-
-  useEffect(() => {
-    if (clinic) document.title = `${clinic.name} · Book an appointment`;
-  }, [clinic]);
 
   if (error) {
     return (
@@ -96,6 +84,9 @@ export default function ClinicPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {error.status === 404 ? "Check the link you were given." : "Please try again in a moment."}
         </p>
+        <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>
+          Go to the home page
+        </Link>
       </main>
     );
   }
@@ -120,7 +111,7 @@ function PageSkeleton() {
 function Clinic({ clinic }: { clinic: PublicBusiness }) {
   const voiceUrl = `${API}/voice/${clinic.slug}`;
   const today = spansFor(clinic.hours, weekdayOf(clinic.today));
-  const languages = listOf(clinic.languages.map(languageName));
+  const languages = joinAnd(clinic.languages.map(languageName));
 
   return (
     <div className="flex-1 bg-muted/40">
@@ -165,7 +156,9 @@ function Clinic({ clinic }: { clinic: PublicBusiness }) {
         <aside className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Opening hours</CardTitle>
+              <CardTitle>
+                <h2>Opening hours</h2>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-2 text-sm">
@@ -192,7 +185,9 @@ function Clinic({ clinic }: { clinic: PublicBusiness }) {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Services</CardTitle>
+              <CardTitle>
+                <h2>Services</h2>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="grid gap-2 text-sm">
@@ -210,10 +205,18 @@ function Clinic({ clinic }: { clinic: PublicBusiness }) {
         </aside>
       </main>
 
-      <footer className="mx-auto w-full max-w-5xl px-4 pb-10 text-xs text-muted-foreground">
-        Appointments and calls by{" "}
-        <Link href="/" className="underline underline-offset-4 hover:text-foreground">
-          Vaani
+      <footer className="mx-auto flex w-full max-w-5xl flex-wrap gap-x-4 gap-y-2 px-4 pb-10 text-xs text-muted-foreground">
+        <span>
+          Appointments and calls by{" "}
+          <Link href="/" className="underline underline-offset-4 hover:text-foreground">
+            Vaani
+          </Link>
+        </span>
+        <Link href="/privacy" className="hover:text-foreground">
+          Privacy policy
+        </Link>
+        <Link href="/terms" className="hover:text-foreground">
+          Terms
         </Link>
       </footer>
     </div>
@@ -297,10 +300,6 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!service || !slot) return;
-    if (!tenDigits(mobile)) {
-      toast.error("Enter a 10-digit mobile number.");
-      return;
-    }
     setSaving(true);
     try {
       const booking = await api<PublicBooking>(`/v1/public/${clinic.slug}/bookings`, {
@@ -373,13 +372,15 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
   return (
     <Card id="book" className="scroll-mt-4">
       <CardHeader>
-        <CardTitle>Book an appointment</CardTitle>
+        <CardTitle>
+          <h2>Book an appointment</h2>
+        </CardTitle>
         <CardDescription>Pick a service and a time that suits you. It takes under a minute.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid gap-7">
           <Step n={1} title="Choose a service">
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div role="group" aria-label="Services" className="grid gap-2 sm:grid-cols-2">
               {clinic.services.map((s) => (
                 <Choice key={s.name} selected={service === s.name} onClick={() => chooseService(s.name)}>
                   <span className="block font-medium">{s.name}</span>
@@ -392,7 +393,7 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
           </Step>
 
           <Step n={2} title="Pick a day">
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            <div role="group" aria-label="Days" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
               {days.map((d, i) => (
                 <Choice
                   key={d}
@@ -431,7 +432,7 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
                 )}
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div role="group" aria-label="Free times" className="grid gap-4">
                 {groups
                   .filter((g) => g.slots.length)
                   .map((g) => (
@@ -457,9 +458,8 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
 
           {slot && service && (
             <Step n={4} title="Your details">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="name">Patient&apos;s name</Label>
+              <div className="grid items-start gap-3 sm:grid-cols-2">
+                <Field label="Patient's name" htmlFor="name">
                   <Input
                     id="name"
                     autoComplete="name"
@@ -468,9 +468,8 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
-                </div>
-                <div className="grid gap-1.5">
-                  <Label htmlFor="mobile">Mobile number</Label>
+                </Field>
+                <Field label="Mobile number" htmlFor="mobile" hint="The clinic uses it only about this booking.">
                   <Input
                     id="mobile"
                     type="tel"
@@ -478,20 +477,34 @@ function Booking({ clinic }: { clinic: PublicBusiness }) {
                     autoComplete="tel"
                     placeholder="98765 43210"
                     required
+                    maxLength={20}
+                    pattern={MOBILE_PATTERN}
+                    data-error={MOBILE_ERROR}
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                   />
-                </div>
+                </Field>
               </div>
               <div className="flex flex-col gap-3 rounded-lg bg-muted p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   <span className="font-medium">{service}</span> · {DAY_NAMES[weekdayOf(day)]} {shortDate(day)},{" "}
                   {time(slot.start_at, clinic.timezone)}
                 </span>
-                <Button type="submit" disabled={saving || !name.trim()}>
+                <Button type="submit" disabled={saving}>
                   {saving ? "Booking…" : "Confirm booking"}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                By booking you agree to the{" "}
+                <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+                  terms
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+                  privacy policy
+                </Link>
+                .
+              </p>
             </Step>
           )}
         </form>

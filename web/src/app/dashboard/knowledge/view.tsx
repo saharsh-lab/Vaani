@@ -153,10 +153,10 @@ function FaqDialog({ faq, onClose, onDone }: { faq: Faq | "new" | null; onClose:
         </DialogHeader>
         <form key={existing?.id ?? "new"} onSubmit={submit} className="grid gap-3">
           <Field label="Topic" htmlFor="title">
-            <Input id="title" name="title" defaultValue={existing?.title} placeholder="Parking" required minLength={2} />
+            <Input id="title" name="title" defaultValue={existing?.title} placeholder="Parking" required minLength={2} maxLength={120} />
           </Field>
           <Field label="Question and answer" htmlFor="content" hint="e.g. Q: Is there parking? A: Free two-wheeler parking in front.">
-            <Textarea id="content" name="content" rows={6} defaultValue={existing?.content} required minLength={2} />
+            <Textarea id="content" name="content" rows={6} defaultValue={existing?.content} required minLength={2} maxLength={4000} />
           </Field>
           <ErrorNote error={error} />
           <DialogFooter>

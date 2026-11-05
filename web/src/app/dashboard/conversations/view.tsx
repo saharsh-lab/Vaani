@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -83,7 +84,14 @@ function Conversations() {
                   >
                     <TableCell className="tabular-nums">{dateTime(c.started_at, business.timezone)}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{c.customer_name ?? "Unknown"}</div>
+                      {/* A real link too, for the keyboard, screen readers and "open in new tab". */}
+                      <Link
+                        href={`/dashboard/conversations/${c.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-medium underline-offset-4 hover:underline"
+                      >
+                        {c.customer_name ?? "Unknown"}
+                      </Link>
                       <div className="text-xs text-muted-foreground">{phone(c.customer_phone)}</div>
                     </TableCell>
                     <TableCell>

@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api, ApiError, useApi } from "@/lib/api";
 import { dayLabel, hhmm, LANGUAGES, rupees, WEEKDAYS } from "@/lib/format";
+import { PHONE_ERROR, PHONE_PATTERN } from "@/lib/validation";
 import type { Blocked, Business, Hours, Service, StaffMember } from "@/lib/types";
 
 const TABS = ["business", "hours", "services", "staff", "days-off"] as const;
@@ -114,10 +115,10 @@ function BusinessForm() {
         <form onSubmit={submit} className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Business name" htmlFor="name">
-              <Input id="name" name="name" defaultValue={business.name} required minLength={2} />
+              <Input id="name" name="name" defaultValue={business.name} required minLength={2} maxLength={80} />
             </Field>
             <Field label="Type of business" htmlFor="type">
-              <Input id="type" name="type" defaultValue={business.type} required minLength={2} />
+              <Input id="type" name="type" defaultValue={business.type} required minLength={2} maxLength={60} />
             </Field>
           </div>
           <Field label="Greeting" htmlFor="greeting" hint="The first thing callers hear. On WhatsApp, Vaani starts its first reply this way.">
@@ -125,10 +126,19 @@ function BusinessForm() {
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Address" htmlFor="address">
-              <Input id="address" name="address" defaultValue={business.address ?? ""} />
+              <Input id="address" name="address" defaultValue={business.address ?? ""} maxLength={200} />
             </Field>
             <Field label="Phone" htmlFor="phone">
-              <Input id="phone" name="phone" type="tel" defaultValue={business.phone ?? ""} />
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                defaultValue={business.phone ?? ""}
+                maxLength={20}
+                pattern={PHONE_PATTERN}
+                data-error={PHONE_ERROR}
+              />
             </Field>
           </div>
           <fieldset>
@@ -382,7 +392,7 @@ function ServiceDialog({ service, onClose, onDone }: { service: Service | "new" 
         </DialogHeader>
         <form key={existing?.id ?? "new"} onSubmit={submit} className="grid gap-3">
           <Field label="Name" htmlFor="svc-name" hint="Customers and Vaani use this name.">
-            <Input id="svc-name" name="name" defaultValue={existing?.name} required minLength={2} />
+            <Input id="svc-name" name="name" defaultValue={existing?.name} required minLength={2} maxLength={80} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Length (minutes)" htmlFor="svc-duration">
@@ -515,7 +525,7 @@ function StaffForm({
   return (
     <form onSubmit={submit} className="grid gap-3">
       <Field label="Name" htmlFor="staff-name">
-        <Input id="staff-name" name="name" defaultValue={existing?.name} placeholder="Dr. Lakshmi Reddy" required minLength={2} />
+        <Input id="staff-name" name="name" defaultValue={existing?.name} placeholder="Dr. Lakshmi Reddy" required minLength={2} maxLength={80} />
       </Field>
       <fieldset>
         <legend className="mb-2 text-sm font-medium">Does these services</legend>
@@ -583,10 +593,20 @@ function DaysOff() {
         <CardContent>
           <form onSubmit={add} className="grid gap-3 sm:grid-cols-2">
             <Field label="From" htmlFor="start">
-              <Input id="start" name="start" type="date" required />
+              <Input
+                id="start"
+                name="start"
+                type="date"
+                required
+                onChange={(e) => {
+                  // "To" can't be before "From".
+                  const end = e.currentTarget.form?.elements.namedItem("end");
+                  if (end instanceof HTMLInputElement) end.min = e.currentTarget.value;
+                }}
+              />
             </Field>
             <Field label="To (optional)" htmlFor="end">
-              <Input id="end" name="end" type="date" />
+              <Input id="end" name="end" type="date" data-error="The last day can't be before the first." />
             </Field>
             <Field label="Who" htmlFor="staff">
               <NativeSelect id="staff" name="staff" className="w-full">

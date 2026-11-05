@@ -1,11 +1,14 @@
+"use client";
+
 // Small building blocks shared by the dashboard pages.
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { validationMessage } from "@/lib/validation";
 
 export function PageHeader({
   title,
@@ -27,6 +30,21 @@ export function PageHeader({
   );
 }
 
+type Control = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function isControl(target: EventTarget | null): target is Control {
+  return (
+    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement
+  );
+}
+
+/**
+ * A labelled form field. Uses the browser's own checks (required, type="email",
+ * minLength, pattern, min/max) but shows the problem in words under the field
+ * instead of a pop-up, marks the field invalid for screen readers, and moves the
+ * cursor to the first field that needs fixing. `data-error` on the input
+ * overrides the message for a pattern or range.
+ */
 export function Field({
   label,
   htmlFor,
@@ -40,11 +58,62 @@ export function Field({
   children: ReactNode;
   className?: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const errorId = htmlFor ? `${htmlFor}-error` : undefined;
+  const hintId = htmlFor && hint ? `${htmlFor}-hint` : undefined;
+
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    // "invalid" doesn't bubble, so listen in the capture phase.
+    const onInvalid = (event: Event) => {
+      if (!isControl(event.target)) return;
+      const el = event.target;
+      event.preventDefault(); // our message instead of the browser's bubble
+      setError(validationMessage(el));
+      el.setAttribute("aria-invalid", "true");
+      if (el.form?.querySelector(":invalid") === el) el.focus();
+    };
+    const onEdit = (event: Event) => {
+      if (isControl(event.target) && event.target.validity.valid) {
+        event.target.removeAttribute("aria-invalid");
+        setError(null);
+      }
+    };
+    root.addEventListener("invalid", onInvalid, true);
+    root.addEventListener("input", onEdit);
+    root.addEventListener("change", onEdit);
+    return () => {
+      root.removeEventListener("invalid", onInvalid, true);
+      root.removeEventListener("input", onEdit);
+      root.removeEventListener("change", onEdit);
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = htmlFor ? ref.current?.querySelector<HTMLElement>(`#${CSS.escape(htmlFor)}`) : null;
+    const described = [error ? errorId : null, hintId].filter(Boolean).join(" ");
+    if (el) {
+      if (described) el.setAttribute("aria-describedby", described);
+      else el.removeAttribute("aria-describedby");
+    }
+  }, [error, errorId, hintId, htmlFor]);
+
   return (
-    <div className={cn("grid gap-1.5", className)}>
+    <div ref={ref} className={cn("grid gap-1.5", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      {hint && (
+        <p id={hintId} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

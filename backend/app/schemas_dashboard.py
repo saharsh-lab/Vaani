@@ -4,7 +4,9 @@ import datetime as dt
 import uuid
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.phones import InvalidPhone, normalize_phone
 
 Role = Literal["owner", "staff"]
 
@@ -171,6 +173,19 @@ class BusinessPatch(BaseModel):
     address: str | None = Field(default=None, max_length=200)
     phone: str | None = Field(default=None, max_length=20)
     languages: list[Literal["te", "hi", "en", "ta", "kn"]] | None = None
+
+    @field_validator("phone")
+    @classmethod
+    def _real_phone(cls, value: str | None) -> str | None:
+        # Shown as a tap-to-call link on the booking page, so it must be a number.
+        if not value:
+            return value
+        try:
+            return normalize_phone(value)
+        except InvalidPhone:
+            raise ValueError(
+                "Enter a phone number, like 040 2345 6789 or +91 98765 43210"
+            ) from None
 
 
 class HoursRow(BaseModel):

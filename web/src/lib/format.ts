@@ -11,6 +11,11 @@ export const LANGUAGES: Record<string, string> = {
   kn: "Kannada",
 };
 
+/** ["Telugu", "Hindi", "English"] -> "Telugu, Hindi and English" */
+export function joinAnd(items: string[]): string {
+  return items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : (items[0] ?? "");
+}
+
 export function languageName(code: string | null): string {
   if (!code) return "–";
   return LANGUAGES[code.split("-")[0]] ?? code;

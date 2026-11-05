@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -9,6 +10,12 @@ import { DashboardShell } from "@/components/dashboard-shell";
 // opts the section out of Next's instant-navigation and static-shell validation;
 // the rest of the app is still validated.
 export const instant = false;
+
+// Private to each business: never in search results.
+export const metadata: Metadata = {
+  title: { default: "Dashboard", template: "%s · Vaani dashboard" },
+  robots: { index: false, follow: false },
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

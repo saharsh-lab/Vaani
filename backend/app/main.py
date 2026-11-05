@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.api import accounts, agent, dashboard, public, tools, voice, whatsapp
 from app.config import get_settings, production_problems
 from app.errors import VaaniError
+from app.https import force_https
 from vaani_agent.config import get_agent_settings
 from vaani_agent.observability import init_sentry
 
@@ -21,6 +22,8 @@ app = FastAPI(
     version="0.1.0",
     description="Multilingual AI receptionist: booking tools and conversation logs.",
 )
+if get_settings().app_env == "production":
+    force_https(app)
 app.include_router(tools.router)
 app.include_router(agent.router)
 app.include_router(whatsapp.router)

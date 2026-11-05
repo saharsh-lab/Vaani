@@ -17,6 +17,7 @@ from app.auth import (
     issue_session,
     verify_password,
 )
+from app.config import get_settings
 from app.db import system_session
 from app.models import Business, User, WorkingHours
 from app.ratelimit import RateLimiter
@@ -87,7 +88,8 @@ async def signup(body: SignupIn, response: Response) -> MeOut:
 @router.post("/login")
 async def login(body: LoginIn, request: Request, response: Response) -> MeOut:
     client = request.client.host if request.client else "unknown"
-    if not login_limiter.allow(f"{client}:{body.email.lower()}", limit=10, window_s=900):
+    limit = get_settings().login_attempts_per_15_min
+    if not login_limiter.allow(f"{client}:{body.email.lower()}", limit=limit, window_s=900):
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS, "Too many attempts. Try again in 15 minutes."
         )

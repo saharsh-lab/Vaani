@@ -371,3 +371,12 @@ async def test_team_members_and_deactivation(owner):
     assert (
         await owner.patch(f"/v1/dashboard/team/{me['id']}", json={"active": False})
     ).status_code == 409
+
+
+async def test_business_phone_must_be_a_number(owner):
+    r = await owner.patch("/v1/dashboard/business", json={"phone": "call us"})
+    assert r.status_code == 422
+    r = await owner.patch("/v1/dashboard/business", json={"phone": "040 2345 6789"})
+    assert r.status_code == 200, r.text
+    me = (await owner.get("/v1/dashboard/me")).json()
+    assert me["business"]["phone"] == "+914023456789"

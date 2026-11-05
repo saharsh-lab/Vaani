@@ -63,6 +63,8 @@ The API runs the migrations itself every time it starts.
    | --- | --- |
    | `API_URL` | `https://<your-api-domain>` |
    | `NEXT_PUBLIC_API_URL` | `https://<your-api-domain>` |
+   | `NEXT_PUBLIC_SITE_URL` | the site's own address, e.g. `https://vaani.vercel.app` (canonical links, sitemap, link previews) |
+   | `NEXT_PUBLIC_CONTACT_EMAIL` | the email for privacy and support questions, shown on `/privacy` and `/terms` |
 
 3. Deploy, open the Vercel URL, and create your business at `/signup`.
 
@@ -92,7 +94,10 @@ Follow "Connect WhatsApp" in the README. The callback URL is `https://<your-api-
 
 ## 6. Check it
 
-- [ ] `https://<api>/health` returns `{"ok":true}`
+- [ ] `https://<api>/health` returns `{"ok":true}`, and `http://<api>/v1/public/<slug>` redirects to `https://`
+- [ ] `/privacy` and `/terms` show your contact email, not `hello@vaani.example`
+- [ ] Paste the booking page link into WhatsApp: the preview shows the business name and address
+- [ ] `https://<vercel-url>/robots.txt` and `/sitemap.xml` use your real domain
 - [ ] Sign up on the Vercel URL; the overview loads and the setup checklist shows what's left
 - [ ] Sign in as a staff member: only Bookings and Callbacks appear
 - [ ] Add a booking from the dashboard; a taken slot suggests free times nearby
